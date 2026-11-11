@@ -22,5 +22,16 @@ export const BASE_DE_DATOS_CONFIG = {
         ajustes: 'clave',
       },
     },
+    {
+      version: 2,
+      tablas: {
+        // id = "cuenta:ticket". Los índices permiten filtrar por cuenta, activo y fechas.
+        operaciones: 'id, cuenta, activo, aperturaUtc, cierreUtc',
+        movimientos: 'id, cuenta, utcMs',
+        importaciones: 'id, cuenta, fechaMs',
+        // Fotos del SL y TP de las operaciones abiertas en cada importación.
+        instantaneasAbiertas: 'id, importacionId, [cuenta+ticket]',
+      },
+    },
   ] as readonly VersionEsquema[],
 } as const;

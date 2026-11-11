@@ -1,13 +1,27 @@
-import { SECCIONES } from '../config/app-config';
+import { SECCIONES, type Seccion } from '../config/app-config';
+import type { Aplicacion } from '../composicion';
 import { crearPaginaNoEncontrada, crearPaginaPendiente } from '../views/pagina-view';
 import { renderizarLayout } from '../views/layout-view';
+import { crearPaginaImportar } from './importar-controller';
+
+type FabricaDePagina = (aplicacion: Aplicacion, seccion: Seccion) => HTMLElement;
+
+/** Pantallas ya construidas. Las que no están aquí muestran una página provisional. */
+const PAGINAS: Readonly<Record<string, FabricaDePagina>> = {
+  '/importar': (aplicacion) => crearPaginaImportar(aplicacion.servicioImportacion),
+};
 
 /**
  * Decide qué pantalla se muestra para cada ruta.
  * Solo coordina: no contiene lógica de negocio.
  */
-export function mostrarPagina(contenedor: HTMLElement, ruta: string): void {
+export function mostrarPagina(contenedor: HTMLElement, ruta: string, aplicacion: Aplicacion): void {
   const seccion = SECCIONES.find((candidata) => candidata.ruta === ruta);
-  const contenido = seccion ? crearPaginaPendiente(seccion) : crearPaginaNoEncontrada();
+  const contenido = seccion ? crearContenido(seccion, aplicacion) : crearPaginaNoEncontrada();
   renderizarLayout(contenedor, ruta, contenido);
+}
+
+function crearContenido(seccion: Seccion, aplicacion: Aplicacion): HTMLElement {
+  const fabrica = PAGINAS[seccion.ruta];
+  return fabrica ? fabrica(aplicacion, seccion) : crearPaginaPendiente(seccion);
 }

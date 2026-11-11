@@ -36,6 +36,18 @@ npm test        # ejecuta las pruebas
 npm run build   # comprueba los tipos y genera la carpeta dist/
 ```
 
+## Importar operaciones (MetaTrader 4)
+
+En la pantalla **Importar** eliges el informe HTML (se recomienda el *Detailed Statement*, que incluye totales para validar), indicas el horario del servidor del broker (zona con nombre, p. ej. `Europe/Athens`, o la regla «Nueva York + N horas») y la aplicación:
+
+- convierte todas las horas a UTC (sin deducir nada: el horario es obligatorio);
+- guarda solo las operaciones nuevas y actualiza las que estaban abiertas y ya se han cerrado;
+- recalcula las estadísticas y las compara con las del informe (tabla *Coincide / Diferencia*).
+
+El fichero no se guarda: se lee, se importa y se descarta. Los datos quedan en el navegador (IndexedDB).
+
+Las pruebas usan un informe inventado (`tests/fixtures/informe-mt4.ts`); no subas informes reales al repositorio.
+
 ## Variables de entorno
 
 Ninguna. Al ser una web estática no hay secretos: todo el código y la configuración son públicos.

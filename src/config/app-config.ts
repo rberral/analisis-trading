@@ -5,6 +5,7 @@
  * solo importa este módulo. Al ser una web estática no hay secretos: todo lo que
  * se escriba aquí es público, así que nunca se deben añadir claves ni contraseñas.
  */
+import type { Plataforma } from '../models/importacion';
 
 export interface Seccion {
   /** Ruta dentro de la web (se usa tras el # de la dirección). */
@@ -51,6 +52,27 @@ export const SECCIONES: readonly Seccion[] = [
     descripcion: 'Exportar e importar todos tus datos, que viven solo en este navegador.',
   },
 ];
+
+export interface OpcionPlataforma {
+  readonly valor: Plataforma;
+  readonly nombre: string;
+}
+
+/** Plataformas de las que se puede importar un informe. Para añadir otra: un parser y una entrada aquí. */
+export const PLATAFORMAS: readonly OpcionPlataforma[] = [
+  { valor: 'mt4', nombre: 'MetaTrader 4 (informe HTML)' },
+];
+
+/**
+ * Margen aceptado al comparar las cifras del informe con las recalculadas.
+ * El informe redondea cada cifra a dos decimales, así que sumar 800 operaciones
+ * puede diferir unos céntimos sin que haya ningún error.
+ */
+export const TOLERANCIAS = {
+  dinero: 0.05,
+  ratio: 0.01,
+  porcentaje: 0.01,
+} as const;
 
 export const APP_CONFIG = {
   nombreApp: 'Diario de trading',
