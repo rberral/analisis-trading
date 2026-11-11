@@ -1,0 +1,83 @@
+:root {
+  --fondo: #f6f7f9;
+  --superficie: #ffffff;
+  --borde: #e3e6eb;
+  --texto: #14181f;
+  --texto-suave: #5b6472;
+  --activo: #e8edf8;
+  --enlace: #1d4ed8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+.estructura {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
+
+.menu {
+  flex: 0 0 232px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 12px;
+  background: var(--superficie);
+  border-right: 1px solid var(--borde);
+}
+
+.menu__marca {
+  padding: 4px 12px 20px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.menu__enlace {
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #4b5565;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.menu__enlace--activo {
+  background: var(--activo);
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.principal {
+  flex: 999 1 560px;
+  min-width: 0;
+  padding: 28px;
+}
+
+.tarjeta {
+  padding: 24px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.tarjeta h1 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+.enlace {
+  color: var(--enlace);
+  font-weight: 600;
+}
