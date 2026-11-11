@@ -22,3 +22,17 @@ export function crearElemento(
   }
   return elemento;
 }
+
+const ESPACIO_SVG = 'http://www.w3.org/2000/svg';
+
+/** Igual que crearElemento, pero para dibujos SVG (que necesitan su propio espacio de nombres). */
+export function crearSvg(etiqueta: string, atributos: Atributos = {}, hijos: readonly (SVGElement | string)[] = []): SVGElement {
+  const elemento = document.createElementNS(ESPACIO_SVG, etiqueta);
+  for (const [nombre, valor] of Object.entries(atributos)) {
+    elemento.setAttribute(nombre, valor);
+  }
+  for (const hijo of hijos) {
+    elemento.append(hijo);
+  }
+  return elemento;
+}

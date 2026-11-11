@@ -84,3 +84,19 @@ export const APP_CONFIG = {
     etiquetaNavegacion: 'Navegación principal',
   },
 } as const;
+
+/** Umbrales con los que se detectan errores. Son criterios orientativos, no verdades absolutas. */
+export const UMBRALES_ERRORES = {
+  /** Con menos operaciones cerradas no se analiza nada: sería ruido. */
+  minimoOperaciones: 10,
+  /** Una pérdida es desproporcionada si supera N veces la ganancia media. */
+  perdidaSobreGananciaMedia: 2,
+  /** Se considera que subes el riesgo si abres con N veces los lotes de la operación perdedora anterior. */
+  aumentoDeLotesTrasPerdida: 1.5,
+  /** Más operaciones abiertas en un mismo día (UTC) que este número = sobreoperación. */
+  operacionesPorDia: 8,
+  /** Las perdedoras duran N veces más que las ganadoras. */
+  duracionPerdedorasSobreGanadoras: 2,
+  /** Mínimo de operaciones de cada tipo para comparar duraciones. */
+  minimoParaDuraciones: 5,
+} as const;

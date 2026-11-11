@@ -48,6 +48,12 @@ El fichero no se guarda: se lee, se importa y se descarta. Los datos quedan en e
 
 Las pruebas usan un informe inventado (`tests/fixtures/informe-mt4.ts`); no subas informes reales al repositorio.
 
+## Panel, Operaciones y Errores
+
+Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.
+
+Errores detectados solo con el informe (umbrales en `src/config/app-config.ts`): operaciones sin stop loss, pérdidas desproporcionadas, subir lotes tras perder, sobreoperación diaria y perdedoras más largas que las ganadoras.
+
 ## Variables de entorno
 
 Ninguna. Al ser una web estática no hay secretos: todo el código y la configuración son públicos.
