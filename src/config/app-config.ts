@@ -89,6 +89,8 @@ export const APP_CONFIG = {
 export const UMBRALES_ERRORES = {
   /** Con menos operaciones cerradas no se analiza nada: sería ruido. */
   minimoOperaciones: 10,
+  /** Una operación sin stop loss cerrada en menos de estos minutos se considera una apertura errónea. */
+  minutosAperturaErronea: 5,
   /** Una pérdida es desproporcionada si supera N veces la ganancia media. */
   perdidaSobreGananciaMedia: 2,
   /** Se considera que subes el riesgo si abres con N veces los lotes de la operación perdedora anterior. */

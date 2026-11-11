@@ -28,12 +28,26 @@ describe('detectarErrores', () => {
     expect(detectar(base())).toEqual([]);
   });
 
-  it('detecta operaciones sin stop loss', () => {
+  it('detecta operaciones mantenidas sin stop loss', () => {
     const operaciones = base();
     operaciones[3] = crearOperacion('999', { stopLoss: null, aperturaUtc: Date.UTC(2026, 0, 8) });
     const errores = detectar(operaciones);
-    expect(errores.map((e) => e.codigo)).toContain('sin_stop_loss');
     expect(errores.find((e) => e.codigo === 'sin_stop_loss')?.tickets).toEqual(['999']);
+  });
+
+  it('separa las operaciones sin stop loss cerradas en segundos como aperturas erróneas', () => {
+    const operaciones = base();
+    const apertura = Date.UTC(2026, 0, 8);
+    operaciones[3] = crearOperacion('998', { stopLoss: null, aperturaUtc: apertura, cierreUtc: apertura + 12_000 });
+    const codigos = detectar(operaciones).map((e) => e.codigo);
+    expect(codigos).toContain('apertura_erronea');
+    expect(codigos.includes('sin_stop_loss')).toBe(false);
+  });
+
+  it('un stop loss movido a break even no se considera ausente', () => {
+    const operaciones = base();
+    operaciones[3] = crearOperacion('997', { stopLoss: 1.1, precioEntrada: 1.1, aperturaUtc: Date.UTC(2026, 0, 8) });
+    expect(detectar(operaciones)).toEqual([]);
   });
 
   it('detecta una pérdida desproporcionada', () => {

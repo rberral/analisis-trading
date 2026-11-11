@@ -27,20 +27,47 @@ function crearError(
   return { ...base, tickets: afectadas.map((o) => o.ticket), impacto: impactoDe(afectadas) };
 }
 
-function detectarSinStopLoss(operaciones: readonly OperacionGuardada[]): ErrorDetectado[] {
-  const afectadas = operaciones.filter((o) => o.stopLoss === null);
-  if (afectadas.length === 0) return [];
-  return [
-    crearError(
-      {
-        codigo: 'sin_stop_loss',
-        titulo: 'Operaciones sin stop loss',
-        descripcion: `${afectadas.length} de ${operaciones.length} operaciones se cerraron sin tener stop loss.`,
-        consejo: 'Define el stop loss antes de entrar: es lo que limita cuánto puedes perder en una operación.',
-      },
-      afectadas,
-    ),
-  ];
+const MS_POR_MINUTO = 60_000;
+
+/**
+ * Sin stop loss al cerrar. Las que se cerraron en pocos minutos se separan: casi
+ * siempre son aperturas por error (clic equivocado) corregidas enseguida, no una
+ * falta de disciplina. Un stop loss movido a break even no cuenta: sigue siendo un precio.
+ */
+function detectarSinStopLoss(operaciones: readonly OperacionGuardada[], umbrales: Umbrales): ErrorDetectado[] {
+  const sinStop = operaciones.filter((o) => o.stopLoss === null);
+  const esRapida = (o: OperacionGuardada) =>
+    (o.cierreUtc ?? o.aperturaUtc) - o.aperturaUtc <= umbrales.minutosAperturaErronea * MS_POR_MINUTO;
+  const erroneas = sinStop.filter(esRapida);
+  const duraderas = sinStop.filter((o) => !esRapida(o));
+  const errores: ErrorDetectado[] = [];
+  if (duraderas.length > 0) {
+    errores.push(
+      crearError(
+        {
+          codigo: 'sin_stop_loss',
+          titulo: 'Operaciones mantenidas sin stop loss',
+          descripcion: `${duraderas.length} operaciones estuvieron más de ${umbrales.minutosAperturaErronea} minutos abiertas sin stop loss.`,
+          consejo: 'Define el stop loss antes de entrar: es lo que limita cuánto puedes perder en una operación.',
+        },
+        duraderas,
+      ),
+    );
+  }
+  if (erroneas.length > 0) {
+    errores.push(
+      crearError(
+        {
+          codigo: 'apertura_erronea',
+          titulo: 'Posibles aperturas por error',
+          descripcion: `${erroneas.length} operaciones sin stop loss se cerraron en menos de ${umbrales.minutosAperturaErronea} minutos.`,
+          consejo: 'Parecen entradas abiertas por equivocación y cerradas enseguida. Si se repiten, añade una confirmación o un stop loss automático a tu forma de abrir.',
+        },
+        erroneas,
+      ),
+    );
+  }
+  return errores;
 }
 
 function detectarPerdidaDesproporcionada(
@@ -152,7 +179,7 @@ export function detectarErrores(
 ): ErrorDetectado[] {
   if (operaciones.length < umbrales.minimoOperaciones) return [];
   return [
-    ...detectarSinStopLoss(operaciones),
+    ...detectarSinStopLoss(operaciones, umbrales),
     ...detectarPerdidaDesproporcionada(operaciones, estadisticas, umbrales),
     ...detectarLotesTrasPerdida(operaciones, umbrales),
     ...detectarSobreoperacion(operaciones, umbrales),
