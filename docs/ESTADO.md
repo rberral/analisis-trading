@@ -28,8 +28,10 @@ Regla de Break Even cambiada a la del proyecto de TradingView: |neto| < 0,1 % de
 
 7. Separación por broker + cuenta (12-nov): importar exige broker y admite nombre de cuenta; id de operación `broker:cuenta:ticket`; esquema IndexedDB v4; la barra de filtros elige una cuenta (no hay «todas»); el saldo al abrir y la clasificación van por cuenta. Los datos anteriores (sin broker) se agrupan como «Sin asignar»: se recomienda borrarlos y reimportar. Las velas no se separan por broker.
 
+8. Copia de seguridad y borrado (12-nov): pantalla `/copia` (exportar JSON de todas las tablas, importar fusionando, borrar todo o una cuenta con confirmación escrita). Servicio `ServicioCopia` + adaptador `AlmacenDexie`; formato versionado en `COPIA_SEGURIDAD`. Pendiente de probar en navegador.
+
 ## Pendiente (hoja de ruta)
-8. Copia de seguridad (exportar/importar JSON, con broker + cuenta) y 9. Borrar datos (todo o por broker/cuenta, con confirmación).
+
 
 Otros pendientes menores: lista de importaciones anteriores en Importar; resolver horas ambiguas/inexistentes por cambio de horario (hoy solo avisos); actualizar maquetas (quitar el correo de la cabecera, añadir Copia de seguridad).
 

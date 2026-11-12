@@ -70,6 +70,10 @@ Para probar la versión de producción (con la política de seguridad activa) en
 
 Todas las horas se guardan en **UTC**: al importar un informe o cargar velas se convierten con el horario del servidor del broker que eliges. En el menú lateral, **Mostrar horas en** permite verlas en UTC (por defecto), en hora del broker (como en MetaTrader) o en hora de España; solo cambia la visualización y la elección se recuerda en el navegador. Los periodos de los filtros siempre se cuentan en UTC.
 
+## Copia de seguridad y borrado
+
+**Copia de seguridad** exporta todos los datos (operaciones, movimientos, importaciones, velas y brokers) a un fichero JSON (`diario-trading_copia_AAAA-MM-DD.json`) y los importa de nuevo. Al importar se **fusiona** con lo que ya hay: no se borra nada, las filas con el mismo id se actualizan y una operación ya cerrada no vuelve a abierta. Cada exportación genera un fichero nuevo (el navegador no puede sobrescribir un fichero del disco por su cuenta). La misma pantalla permite **borrar** todos los datos o solo los de una cuenta (broker + cuenta), escribiendo `BORRAR` para confirmar; los ficheros de velas cargados y los ajustes de pantalla se conservan al borrar una cuenta.
+
 ## Sobre la aplicación
 
 La sección **Sobre la aplicación** del menú explica, para quien la ve por primera vez, qué hace cada apartado y en qué orden usarlos.

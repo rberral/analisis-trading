@@ -45,7 +45,7 @@ const PASOS: readonly Paso[] = [
   {
     titulo: 'Copia de seguridad',
     ruta: '/copia',
-    texto: 'Tus datos viven solo en este navegador. Aquí podrás exportarlos a un fichero y volver a importarlos, por ejemplo para cambiar de navegador o de ordenador.',
+    texto: 'Tus datos viven solo en este navegador. Aquí puedes exportarlos a un fichero y volver a importarlos (se fusionan con lo que ya tengas), por ejemplo para cambiar de navegador o de ordenador. También puedes borrar todos los datos o solo los de una cuenta.',
   },
 ];
 

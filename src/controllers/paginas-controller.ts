@@ -7,6 +7,7 @@ import { crearPaginaImportar } from './importar-controller';
 import { crearPaginaVelas } from './velas-controller';
 import { crearPaginaDetalle } from './detalle-controller';
 import { crearPaginaExportar } from './exportar-controller';
+import { crearPaginaCopia } from './copia-controller';
 import { crearPaginaSobre } from '../views/sobre-view';
 
 type FabricaDePagina = (aplicacion: Aplicacion, seccion: Seccion) => HTMLElement;
@@ -17,6 +18,7 @@ const PAGINAS: Readonly<Record<string, FabricaDePagina>> = {
   '/operaciones': (aplicacion) => crearPaginaOperaciones(aplicacion),
   '/errores': (aplicacion) => crearPaginaErrores(aplicacion),
   '/velas': (aplicacion) => crearPaginaVelas(aplicacion),
+  '/copia': (aplicacion) => crearPaginaCopia(aplicacion),
   '/sobre': () => crearPaginaSobre(),
   '/exportar': (aplicacion) => crearPaginaExportar(aplicacion),
   '/importar': (aplicacion) => crearPaginaImportar(aplicacion),

@@ -246,3 +246,14 @@ export const EXPORTACION_TRADINGVIEW = {
    */
   simbolosTradingView: {} as Readonly<Record<string, string>>,
 } as const;
+
+/** Copia de seguridad y borrado de datos. */
+export const COPIA_SEGURIDAD = {
+  /** Marca del fichero para reconocer que es una copia de esta aplicación. */
+  formato: 'diario-trading-copia',
+  /** Sube si cambia la estructura del fichero; una copia de una versión mayor no se acepta. */
+  version: 1,
+  prefijoFichero: 'diario-trading_copia',
+  /** Palabra que hay que escribir para confirmar que se borran los datos. */
+  palabraConfirmacion: 'BORRAR',
+} as const;

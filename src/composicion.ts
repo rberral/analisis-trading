@@ -8,7 +8,9 @@ import { abrirBaseDeDatos } from './adapters/storage/base-de-datos';
 import { RepositorioOperacionesDexie } from './adapters/storage/operaciones-repositorio';
 import { ParserVelasMt4Csv } from './adapters/candle-parsers/mt4-csv-parser';
 import { RepositorioVelasDexie } from './adapters/storage/velas-repositorio';
-import { TEMPORALIDADES, VISUALIZACION_HORAS } from './config/app-config';
+import { COPIA_SEGURIDAD, TEMPORALIDADES, VISUALIZACION_HORAS } from './config/app-config';
+import { AlmacenDexie } from './adapters/storage/almacen-dexie';
+import { ServicioCopia } from './services/copia/servicio-copia';
 import { ServicioVelas } from './services/velas/servicio-velas';
 import { PreferenciasNavegador } from './adapters/storage/preferencias-navegador';
 import { LectorHorariosDexie } from './adapters/storage/lector-horarios-dexie';
@@ -25,6 +27,7 @@ export interface Aplicacion {
   readonly baseDeDatos: Dexie;
   readonly servicioImportacion: ServicioImportacion;
   readonly servicioVelas: ServicioVelas;
+  readonly servicioCopia: ServicioCopia;
   readonly lectorDatos: LectorDatos;
   readonly lectorVentanas: LectorVentanas;
   readonly lectorHorarios: LectorHorarios;
@@ -41,6 +44,7 @@ export function crearAplicacion(): Aplicacion {
   return {
     baseDeDatos,
     servicioImportacion: new ServicioImportacion(crearParsers(), repositorio),
+    servicioCopia: new ServicioCopia(new AlmacenDexie(baseDeDatos), COPIA_SEGURIDAD),
     servicioVelas: new ServicioVelas(new ParserVelasMt4Csv(), lectorDatos, new RepositorioVelasDexie(baseDeDatos), TEMPORALIDADES),
     lectorDatos,
     lectorVentanas: new LectorVentanasDexie(baseDeDatos),
