@@ -4,6 +4,9 @@ import { crearGraficoVelas, type GraficoVelas, type MarcadorGrafico } from '../a
 import { logger } from '../core/logger';
 import type { OperacionGuardada } from '../models/operacion';
 import type { VentanaVelas } from '../models/velas';
+import type { VisualizadorHoras } from '../services/visualizacion/visualizador-horas';
+import { crearVisualizadorActual } from './horas-controller';
+import { crearNotaHoras } from '../views/notas-view';
 import { crearClasificador } from '../services/analisis/clasificacion-cierre';
 import { calcularRecorrido, evaluarSalidaPosterior } from '../services/analisis/recorrido';
 import { duracionDeTemporalidad, ventanaMasDetallada, velaQueContiene } from '../services/analisis/ventanas-operacion';
@@ -35,7 +38,7 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
   const pagina = crearElemento('div', {}, [crearElemento('p', { class: 'texto-suave' }, ['Cargando…'])]);
   let grafico: GraficoVelas | null = null;
 
-  function dibujarVelas(zona: HTMLElement, operacion: OperacionGuardada, ventana: VentanaVelas): void {
+  function dibujarVelas(zona: HTMLElement, operacion: OperacionGuardada, ventana: VentanaVelas, horas: VisualizadorHoras): void {
     grafico?.destruir();
     const duracionMs = duracionDeTemporalidad(ventana.temporalidad, TEMPORALIDADES);
     const contenedor = crearElemento('div', { class: 'grafico' });
@@ -45,15 +48,15 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
       ...(operacion.takeProfit === null ? [] : [{ precio: operacion.takeProfit, titulo: 'TP', color: COLORES_GRAFICO.takeProfit }]),
     ];
     const tarjetaGrafico = crearElemento('div', { class: 'tarjeta' }, [
-      crearElemento('h2', {}, [`Gráfico · ${ventana.temporalidad}`]),
+      crearElemento('h2', {}, [`Gráfico · ${ventana.temporalidad} · horas en ${horas.etiqueta}`]),
       contenedor,
-      ventana.truncada ? crearElemento('p', { class: 'aviso aviso--atencion' }, ['La operación duró tanto que solo se muestran las primeras velas guardadas.']) : crearElemento('p', { class: 'texto-suave' }, ['Horas en UTC.']),
+      ventana.truncada ? crearElemento('p', { class: 'aviso aviso--atencion' }, ['La operación duró tanto que solo se muestran las primeras velas guardadas.']) : crearElemento('span'),
     ]);
     const recorrido = calcularRecorrido(operacion, ventana.velas, duracionMs);
     const tarjetaSalida = crearTarjetaSalida(evaluarSalidaPosterior(operacion, ventana.velas));
     zona.replaceChildren(tarjetaGrafico, crearTarjetaRecorrido(recorrido), ...(tarjetaSalida ? [tarjetaSalida] : []));
     try {
-      grafico = crearGraficoVelas(contenedor, { decimales: decimalesDePrecio(operacion.precioEntrada), velas: ventana.velas, lineas, marcadores: crearMarcadores(operacion, ventana, duracionMs) });
+      grafico = crearGraficoVelas(contenedor, { decimales: decimalesDePrecio(operacion.precioEntrada), desfaseMs: (utcMs) => horas.desfaseMs(utcMs, operacion.importacionId), velas: ventana.velas, lineas, marcadores: crearMarcadores(operacion, ventana, duracionMs) });
     } catch (error) {
       logger.error('No se pudo dibujar el gráfico', error);
       contenedor.replaceChildren('No se pudo dibujar el gráfico.');
@@ -68,6 +71,7 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
       return;
     }
     const ventanas = await aplicacion.lectorVentanas.leerVentanasDe(operacion.id);
+    const horas = await crearVisualizadorActual(aplicacion);
     const zonaVelas = crearElemento('div');
     const elegida = ventanaMasDetallada(ventanas, TEMPORALIDADES);
     const controles: HTMLElement[] = [];
@@ -77,18 +81,19 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
       selector.value = elegida?.temporalidad ?? '';
       selector.addEventListener('change', () => {
         const otra = ventanas.find((v) => v.temporalidad === selector.value);
-        if (otra) dibujarVelas(zonaVelas, operacion, otra);
+        if (otra) dibujarVelas(zonaVelas, operacion, otra, horas);
       });
       controles.push(crearElemento('label', { class: 'campo campo--filtro' }, ['Temporalidad', selector]));
     }
-    if (elegida) dibujarVelas(zonaVelas, operacion, elegida);
+    if (elegida) dibujarVelas(zonaVelas, operacion, elegida, horas);
     else zonaVelas.replaceChildren(crearSinVelas());
 
     pagina.replaceChildren(
       crearElemento('a', { href: '#/operaciones', class: 'enlace' }, ['← Volver a Operaciones']),
       crearElemento('h1', { class: 'titulo-pagina' }, ['Detalle de la operación']),
+      crearNotaHoras(horas),
       ...controles,
-      crearTarjetaDatos(operacion, crearClasificador(datos.operaciones, CLASIFICACION_CIERRE)(operacion)),
+      crearTarjetaDatos(operacion, crearClasificador(datos.operaciones, CLASIFICACION_CIERRE)(operacion), horas),
       zonaVelas,
     );
   }

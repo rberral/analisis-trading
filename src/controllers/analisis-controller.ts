@@ -8,6 +8,8 @@ import { crearPerfil } from '../services/analisis/perfil-estrategia';
 import { duracionDeTemporalidad, indexarVentanas } from '../services/analisis/ventanas-operacion';
 import { detectarErrores } from '../services/errores/detector-errores';
 import { detectarSalidasAnticipadas } from '../services/errores/detector-salidas';
+import type { VisualizadorHoras } from '../services/visualizacion/visualizador-horas';
+import { crearVisualizadorActual } from './horas-controller';
 import { crearElemento } from '../views/dom';
 import { crearContenidoErrores } from '../views/errores-view';
 import { crearBarraFiltros } from '../views/filtros-view';
@@ -17,7 +19,7 @@ import { crearContenidoPanel } from '../views/panel-view';
 /** Una ventana de velas por operación (la más detallada); vacío si no se han cargado velas. */
 type VentanasPorOperacion = ReadonlyMap<string, VentanaVelas>;
 
-type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion) => HTMLElement;
+type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion, horas: VisualizadorHoras) => HTMLElement;
 
 /**
  * Pantalla con barra de filtros arriba y contenido que depende del filtro.
@@ -28,18 +30,19 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
   const zonaContenido = crearElemento('div', { 'aria-live': 'polite' }, [crearElemento('p', { class: 'texto-suave' }, ['Cargando…'])]);
   const pagina = crearElemento('div', {}, [crearElemento('h1', { class: 'titulo-pagina' }, [titulo]), zonaBarra, zonaContenido]);
 
-  function mostrar(datos: DatosGuardados, ventanas: VentanasPorOperacion): void {
+  function mostrar(datos: DatosGuardados, ventanas: VentanasPorOperacion, horas: VisualizadorHoras): void {
     const resultado = analizarPeriodo(datos, aplicacion.filtro.obtener());
     zonaContenido.replaceChildren(
       typeof resultado === 'string'
         ? crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [resultado])
-        : dibujar(resultado, ventanas),
+        : dibujar(resultado, ventanas, horas),
     );
   }
 
   async function cargar(): Promise<void> {
     const datos = await aplicacion.lectorDatos.leerTodo();
     const ventanas = indexarVentanas(await aplicacion.lectorVentanas.leerVentanas(), TEMPORALIDADES);
+    const horas = await crearVisualizadorActual(aplicacion);
     if (datos.operaciones.length === 0) {
       zonaContenido.replaceChildren(
         crearElemento('p', { class: 'aviso' }, ['Todavía no hay operaciones. Empieza por '], ),
@@ -53,11 +56,11 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
         filtro: aplicacion.filtro.obtener(),
         alCambiar: (filtro) => {
           aplicacion.filtro.fijar(filtro);
-          mostrar(datos, ventanas);
+          mostrar(datos, ventanas, horas);
         },
       }),
     );
-    mostrar(datos, ventanas);
+    mostrar(datos, ventanas, horas);
   }
 
   cargar().catch((error: unknown) => {
@@ -75,7 +78,7 @@ export const crearPaginaPanel = (aplicacion: Aplicacion): HTMLElement =>
   );
 
 export const crearPaginaOperaciones = (aplicacion: Aplicacion): HTMLElement =>
-  crearPaginaFiltrada(aplicacion, 'Operaciones', crearContenidoOperaciones);
+  crearPaginaFiltrada(aplicacion, 'Operaciones', (analisis, _ventanas, horas) => crearContenidoOperaciones(analisis, horas));
 
 export const crearPaginaErrores = (aplicacion: Aplicacion): HTMLElement =>
   crearPaginaFiltrada(aplicacion, 'Errores y consejos', (analisis, ventanas) =>

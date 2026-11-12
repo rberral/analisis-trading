@@ -8,8 +8,12 @@ import { abrirBaseDeDatos } from './adapters/storage/base-de-datos';
 import { RepositorioOperacionesDexie } from './adapters/storage/operaciones-repositorio';
 import { ParserVelasMt4Csv } from './adapters/candle-parsers/mt4-csv-parser';
 import { RepositorioVelasDexie } from './adapters/storage/velas-repositorio';
-import { TEMPORALIDADES } from './config/app-config';
+import { TEMPORALIDADES, VISUALIZACION_HORAS } from './config/app-config';
 import { ServicioVelas } from './services/velas/servicio-velas';
+import { PreferenciasNavegador } from './adapters/storage/preferencias-navegador';
+import { LectorHorariosDexie } from './adapters/storage/lector-horarios-dexie';
+import type { LectorHorarios } from './services/consultas/puertos-horarios';
+import { PreferenciaModoHora } from './services/visualizacion/preferencia-modo-hora';
 import { LectorDexie } from './adapters/storage/lector-dexie';
 import { LectorVentanasDexie } from './adapters/storage/lector-ventanas-dexie';
 import type { LectorVentanas } from './services/consultas/puertos-ventanas';
@@ -23,6 +27,9 @@ export interface Aplicacion {
   readonly servicioVelas: ServicioVelas;
   readonly lectorDatos: LectorDatos;
   readonly lectorVentanas: LectorVentanas;
+  readonly lectorHorarios: LectorHorarios;
+  /** En qué hora quiere ver las horas el usuario. */
+  readonly preferenciaHoras: PreferenciaModoHora;
   /** Filtro elegido por el usuario; se comparte entre pantallas. */
   readonly filtro: AlmacenFiltro;
 }
@@ -37,6 +44,13 @@ export function crearAplicacion(): Aplicacion {
     servicioVelas: new ServicioVelas(new ParserVelasMt4Csv(), lectorDatos, new RepositorioVelasDexie(baseDeDatos), TEMPORALIDADES),
     lectorDatos,
     lectorVentanas: new LectorVentanasDexie(baseDeDatos),
+    lectorHorarios: new LectorHorariosDexie(baseDeDatos),
+    preferenciaHoras: new PreferenciaModoHora(
+      new PreferenciasNavegador(),
+      VISUALIZACION_HORAS.claveAlmacenamiento,
+      VISUALIZACION_HORAS.modos.map((modo) => modo.id),
+      VISUALIZACION_HORAS.inicial,
+    ),
     filtro: new AlmacenFiltro(),
   };
 }

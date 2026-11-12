@@ -24,6 +24,8 @@ export interface MarcadorGrafico {
 export interface DatosGrafico {
   /** Decimales con los que se muestran los precios (5 en EURUSD, 3 en USDJPY, 2 en oro…). */
   readonly decimales: number;
+  /** Milisegundos a sumar a cada hora UTC para mostrarla en el horario elegido (el eje del gráfico siempre escribe sus horas como UTC). */
+  readonly desfaseMs: (utcMs: number) => number;
   readonly velas: readonly Vela[];
   readonly lineas: readonly LineaPrecio[];
   readonly marcadores: readonly MarcadorGrafico[];
@@ -54,13 +56,15 @@ export function crearGraficoVelas(contenedor: HTMLElement, datos: DatosGrafico):
     borderVisible: false,
     priceFormat: { type: 'price', precision: datos.decimales, minMove: 10 ** -datos.decimales },
   });
-  const velas: CandlestickData<Time>[] = datos.velas.map((vela) => ({
-    time: segundos(vela.utcMs),
-    open: vela.abre,
-    high: vela.maximo,
-    low: vela.minimo,
-    close: vela.cierra,
-  }));
+  const hora = (utcMs: number): UTCTimestamp => segundos(utcMs + datos.desfaseMs(utcMs));
+  const velas: CandlestickData<Time>[] = [];
+  for (const vela of datos.velas) {
+    const time = hora(vela.utcMs);
+    // Con un cambio de hora dentro de la ventana, el reloj mostrado puede repetirse: la librería exige tiempos crecientes.
+    const anterior = velas[velas.length - 1];
+    if (anterior && (time as number) <= (anterior.time as number)) continue;
+    velas.push({ time, open: vela.abre, high: vela.maximo, low: vela.minimo, close: vela.cierra });
+  }
   serie.setData(velas);
 
   for (const linea of datos.lineas) {
@@ -69,7 +73,7 @@ export function crearGraficoVelas(contenedor: HTMLElement, datos: DatosGrafico):
   // La librería exige las marcas ordenadas por tiempo.
   const marcas: SeriesMarker<Time>[] = [...datos.marcadores]
     .sort((a, b) => a.velaUtcMs - b.velaUtcMs)
-    .map((m) => ({ time: segundos(m.velaUtcMs), position: m.posicion === 'arriba' ? 'aboveBar' : 'belowBar', color: m.color, shape: FORMAS[m.forma], text: m.texto }));
+    .map((m) => ({ time: hora(m.velaUtcMs), position: m.posicion === 'arriba' ? 'aboveBar' : 'belowBar', color: m.color, shape: FORMAS[m.forma], text: m.texto }));
   serie.setMarkers(marcas);
 
   // El contenedor puede recibir su ancho real después de crear el gráfico (al insertarse en la página):

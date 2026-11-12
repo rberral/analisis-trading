@@ -18,6 +18,9 @@ export const entero = (valor: number): string => FORMATO_0.format(valor);
 export const porcentaje = (valor: number): string => `${FORMATO_2.format(valor)} %`;
 export const fechaHoraUtc = (utcMs: number): string => FORMATO_FECHA_HORA.format(new Date(utcMs));
 
+/** Fecha y hora ya desplazada al modo elegido (se escribe con el reloj UTC porque el desplazamiento ya está sumado). */
+export const fechaHora = (utcMs: number, desfaseMs: number): string => FORMATO_FECHA_HORA.format(new Date(utcMs + desfaseMs));
+
 /** Precios: sin ceros de más (1,1 en vez de 1,10000), hasta 5 decimales. */
 export const precio = (valor: number | null): string =>
   valor === null ? '—' : new Intl.NumberFormat('es-ES', { maximumFractionDigits: 5 }).format(valor);

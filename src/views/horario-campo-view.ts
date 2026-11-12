@@ -44,7 +44,7 @@ export function crearCampoHorario(opciones: readonly OpcionHorario[]): CampoHora
     selector,
     filaZona,
     filaHoras,
-    crearElemento('p', { class: 'texto-suave' }, ['No hay valor por defecto: el fichero no incluye la zona horaria y la aplicación no la deduce.']),
+    crearElemento('p', { class: 'texto-suave' }, ['No hay valor por defecto: el fichero no incluye la zona horaria y la aplicación no la deduce. Todas las horas se guardan en UTC: al cargar el fichero se convierten a UTC con el horario que elijas aquí.']),
   ]);
 
   return { elemento, leer: () => ({ opcionHorario: selector.value, zona: campoZona.value, horas: campoHoras.value }) };

@@ -1,7 +1,7 @@
 import { SECCIONES, type Seccion } from '../config/app-config';
 import type { Aplicacion } from '../composicion';
 import { crearPaginaNoEncontrada, crearPaginaPendiente } from '../views/pagina-view';
-import { renderizarLayout } from '../views/layout-view';
+import { renderizarLayout, type OpcionesHoras } from '../views/layout-view';
 import { crearPaginaErrores, crearPaginaOperaciones, crearPaginaPanel } from './analisis-controller';
 import { crearPaginaImportar } from './importar-controller';
 import { crearPaginaVelas } from './velas-controller';
@@ -26,12 +26,23 @@ export function mostrarPagina(contenedor: HTMLElement, ruta: string, aplicacion:
   const idOperacion = leerIdDeDetalle(ruta);
   if (idOperacion !== null) {
     // El detalle cuelga de Operaciones: esa opción del menú queda marcada.
-    renderizarLayout(contenedor, '/operaciones', crearPaginaDetalle(aplicacion, idOperacion));
+    renderizarLayout(contenedor, '/operaciones', crearPaginaDetalle(aplicacion, idOperacion), opcionesHoras(contenedor, ruta, aplicacion));
     return;
   }
   const seccion = SECCIONES.find((candidata) => candidata.ruta === ruta);
   const contenido = seccion ? crearContenido(seccion, aplicacion) : crearPaginaNoEncontrada();
-  renderizarLayout(contenedor, ruta, contenido);
+  renderizarLayout(contenedor, ruta, contenido, opcionesHoras(contenedor, ruta, aplicacion));
+}
+
+/** Al cambiar cómo se muestran las horas, se recuerda la elección y se vuelve a dibujar la pantalla. */
+function opcionesHoras(contenedor: HTMLElement, ruta: string, aplicacion: Aplicacion): OpcionesHoras {
+  return {
+    modo: aplicacion.preferenciaHoras.obtener(),
+    alCambiar: (modo) => {
+      aplicacion.preferenciaHoras.fijar(modo);
+      mostrarPagina(contenedor, ruta, aplicacion);
+    },
+  };
 }
 
 const PREFIJO_DETALLE = '/operaciones/';

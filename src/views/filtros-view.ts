@@ -117,6 +117,7 @@ export function crearBarraFiltros(opciones: OpcionesBarra): HTMLElement {
       campo.querySelector('select,input')?.addEventListener('change', alCambiarOtro);
     }
 
+    campos.push(crearElemento('p', { class: 'texto-suave barra-filtros__nota' }, ['Los periodos (año, trimestre, mes y rango) se cuentan en UTC, según la hora de cierre de cada operación.']));
     barra.replaceChildren(...campos);
   }
 

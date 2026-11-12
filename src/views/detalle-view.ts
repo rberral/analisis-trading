@@ -3,7 +3,8 @@ import type { OperacionGuardada } from '../models/operacion';
 import type { ClasificacionCierre } from '../models/filtro';
 import { TEXTO_CLASIFICACION } from '../services/analisis/clasificacion-cierre';
 import { crearElemento } from './dom';
-import { fechaHoraUtc, importe, precio } from './formato';
+import type { VisualizadorHoras } from '../services/visualizacion/visualizador-horas';
+import { fechaHora, importe, precio } from './formato';
 
 const TEXTO_CIERRE = { tp: 'Take profit', sl: 'Stop loss', manual: 'Manual' } as const;
 
@@ -22,15 +23,15 @@ function filaDato(nombre: string, valor: string): HTMLElement {
   return crearElemento('tr', {}, [crearElemento('th', {}, [nombre]), crearElemento('td', {}, [valor])]);
 }
 
-export function crearTarjetaDatos(o: OperacionGuardada, clasificacion: ClasificacionCierre | null): HTMLElement {
+export function crearTarjetaDatos(o: OperacionGuardada, clasificacion: ClasificacionCierre | null, horas: VisualizadorHoras): HTMLElement {
   const resultado = neto(o);
   const filas = [
     filaDato('Tipo y tamaño', `${o.tipo === 'compra' ? 'Compra' : 'Venta'} · ${importe(o.lotes)} lotes`),
     filaDato('Entrada', precio(o.precioEntrada)),
     filaDato('Stop loss (el último que tuvo)', precio(o.stopLoss)),
     filaDato('Take profit', precio(o.takeProfit)),
-    filaDato('Apertura (UTC)', fechaHoraUtc(o.aperturaUtc)),
-    filaDato('Cierre (UTC)', o.cierreUtc === null ? 'Sigue abierta' : fechaHoraUtc(o.cierreUtc)),
+    filaDato(`Apertura (${horas.etiqueta})`, fechaHora(o.aperturaUtc, horas.desfaseMs(o.aperturaUtc, o.importacionId))),
+    filaDato(`Cierre (${horas.etiqueta})`, o.cierreUtc === null ? 'Sigue abierta' : fechaHora(o.cierreUtc, horas.desfaseMs(o.cierreUtc, o.importacionId))),
     filaDato('Duración', o.cierreUtc === null ? '—' : duracionLegible(o.cierreUtc - o.aperturaUtc)),
     filaDato('Precio de cierre', precio(o.precioCierre)),
     filaDato('Cierre', clasificacion ? TEXTO_CLASIFICACION[clasificacion] : '—'),

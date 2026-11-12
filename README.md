@@ -64,6 +64,10 @@ Pulsando el ticket en **Operaciones** se abre el detalle: datos de la operación
 
 Para probar la versión de producción (con la política de seguridad activa) en local: `npm run build` y `npm run preview`.
 
+## Horas
+
+Todas las horas se guardan en **UTC**: al importar un informe o cargar velas se convierten con el horario del servidor del broker que eliges. En el menú lateral, **Mostrar horas en** permite verlas en UTC (por defecto), en hora del broker (como en MetaTrader) o en hora de España; solo cambia la visualización y la elección se recuerda en el navegador. Los periodos de los filtros siempre se cuentan en UTC.
+
 ## Panel, Operaciones y Errores
 
 Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. El filtro **Cierre** clasifica por resultado, no por la etiqueta de MetaTrader (que llama «stop loss» también a los stops movidos a beneficio): Take profit (cierre automático con ganancia), Stop loss (con pérdida), Break even (movimiento de precio menor al 0,01 % del valor de la posición; `CLASIFICACION_CIERRE` en la configuración) y Manual. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.

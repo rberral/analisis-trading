@@ -2,7 +2,9 @@ import type { OpcionHorario, OpcionTemporalidad } from '../config/app-config';
 import type { RegistroCargaVelas, Temporalidad } from '../models/velas';
 import type { AnalisisCargaVelas } from '../services/velas/servicio-velas';
 import { crearElemento } from './dom';
-import { entero, fechaHoraUtc, porcentaje } from './formato';
+import type { VisualizadorHoras } from '../services/visualizacion/visualizador-horas';
+import { entero, fechaHora, porcentaje } from './formato';
+import { crearNotaHoras } from './notas-view';
 import { crearCampoHorario, type DatosHorario } from './horario-campo-view';
 
 export interface DatosFormularioVelas extends DatosHorario {
@@ -16,9 +18,9 @@ export interface VistaVelas {
   readonly elemento: HTMLElement;
   mostrarCargando(texto: string): void;
   mostrarError(mensaje: string): void;
-  mostrarAnalisis(analisis: AnalisisCargaVelas): void;
+  mostrarAnalisis(analisis: AnalisisCargaVelas, horas: VisualizadorHoras): void;
   mostrarGuardado(registro: RegistroCargaVelas): void;
-  mostrarCargas(cargas: readonly RegistroCargaVelas[]): void;
+  mostrarCargas(cargas: readonly RegistroCargaVelas[], horas: VisualizadorHoras): void;
 }
 
 interface OpcionesVista {
@@ -72,7 +74,7 @@ function crearVeredicto(analisis: AnalisisCargaVelas): HTMLElement {
   ]);
 }
 
-function crearTablaCargas(cargas: readonly RegistroCargaVelas[]): HTMLElement {
+function crearTablaCargas(cargas: readonly RegistroCargaVelas[], horas: VisualizadorHoras): HTMLElement {
   if (cargas.length === 0) {
     return crearElemento('p', { class: 'texto-suave' }, ['Todavía no has cargado ningún fichero de velas.']);
   }
@@ -82,12 +84,12 @@ function crearTablaCargas(cargas: readonly RegistroCargaVelas[]): HTMLElement {
       crearElemento('td', {}, [c.temporalidad]),
       crearElemento('td', {}, [c.nombreFichero]),
       crearElemento('td', {}, [c.broker ?? '—']),
-      crearElemento('td', {}, [`${fechaHoraUtc(c.primeraVelaUtc)} → ${fechaHoraUtc(c.ultimaVelaUtc)}`]),
+      crearElemento('td', {}, [`${hora(c.primeraVelaUtc, c.id, horas)} → ${hora(c.ultimaVelaUtc, c.id, horas)}`]),
       crearElemento('td', { class: 'numero' }, [entero(c.ventanasGuardadas)]),
-      crearElemento('td', {}, [fechaHoraUtc(c.fechaMs)]),
+      crearElemento('td', {}, [fechaHora(c.fechaMs, horas.modo === 'espana' ? horas.desfaseMs(c.fechaMs, null) : 0)]),
     ]),
   );
-  const columnas = ['Activo', 'Temporalidad', 'Fichero', 'Broker', 'Rango (UTC)', 'Operaciones con velas', 'Cargado'];
+  const columnas = ['Activo', 'Temporalidad', 'Fichero', 'Broker', `Rango (${horas.etiqueta})`, 'Operaciones con velas', 'Cargado'];
   return crearElemento('div', { class: 'tabla-envoltorio' }, [
     crearElemento('table', { class: 'tabla' }, [
       crearElemento('thead', {}, [crearElemento('tr', {}, columnas.map((n) => crearElemento('th', {}, [n])))]),
@@ -146,7 +148,7 @@ export function crearVistaVelas(opciones: OpcionesVista): VistaVelas {
       botonAnalizar.disabled = false;
       zonaResultado.replaceChildren(crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [mensaje]));
     },
-    mostrarAnalisis(analisis) {
+    mostrarAnalisis(analisis, horas) {
       botonAnalizar.disabled = false;
       const r = analisis.registro;
       const botonGuardar = crearElemento('button', { type: 'button', class: 'boton' }, ['Guardar velas de mis operaciones']) as HTMLButtonElement;
@@ -168,7 +170,7 @@ export function crearVistaVelas(opciones: OpcionesVista): VistaVelas {
             cifra(analisis.operacionesFueraDeRango, 'fuera del rango del fichero'),
             cifra(analisis.velasAGuardar, 'velas que se guardarían'),
           ]),
-          crearElemento('p', { class: 'texto-suave' }, [`Rango del fichero (UTC): ${fechaHoraUtc(r.primeraVelaUtc)} → ${fechaHoraUtc(r.ultimaVelaUtc)}`]),
+          crearElemento('p', { class: 'texto-suave' }, [`Rango del fichero (${horas.etiqueta}): ${hora(r.primeraVelaUtc, r.id, horas)} → ${hora(r.ultimaVelaUtc, r.id, horas)}`]),
           crearElemento('h3', {}, ['Comprobación del horario']),
           crearVeredicto(analisis),
           crearTablaDesfases(analisis),
@@ -182,10 +184,14 @@ export function crearVistaVelas(opciones: OpcionesVista): VistaVelas {
         crearElemento('p', { class: 'aviso' }, [`Guardado: ${entero(registro.ventanasGuardadas)} operaciones de ${registro.activo} ya tienen sus velas.`]),
       );
     },
-    mostrarCargas(cargas) {
-      zonaCargas.replaceChildren(crearTablaCargas(cargas));
+    mostrarCargas(cargas, horas) {
+      zonaCargas.replaceChildren(crearNotaHoras(horas), crearTablaCargas(cargas, horas));
     },
   };
+}
+
+function hora(utcMs: number, origenId: string, horas: VisualizadorHoras): string {
+  return fechaHora(utcMs, horas.desfaseMs(utcMs, origenId));
 }
 
 function cifra(valor: number, texto: string): HTMLElement {

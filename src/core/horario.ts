@@ -90,6 +90,17 @@ function desfaseEnInstante(instanteMs: number, zona: string): number {
   return comoSiFueraUtc - instanteSinMilisegundos;
 }
 
+/** Desfase (en ms) de una zona con nombre respecto a UTC en un instante. Para mostrar horas en esa zona. */
+export function desfaseDeZonaEnInstante(instanteMs: number, zona: string): number {
+  return desfaseEnInstante(instanteMs, zona.trim());
+}
+
+/** Cuánto hay que sumar a un instante UTC para obtener la hora del reloj del servidor del broker en ese momento. */
+export function desfaseDelBrokerMs(utcMs: number, horario: HorarioBroker): number {
+  if (horario.tipo === 'zona') return desfaseEnInstante(utcMs, horario.zona.trim());
+  return desfaseEnInstante(utcMs, ZONA_NUEVA_YORK) + horario.horas * MS_POR_HORA;
+}
+
 /**
  * Convierte una hora de reloj de una zona (expresada como si fuera UTC) en el
  * instante real. Prueba los desfases de un día antes y un día después: solo es

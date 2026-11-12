@@ -365,3 +365,26 @@ select {
 [hidden] {
   display: none !important;
 }
+
+/* Selector de horas, notas informativas */
+.menu__horas {
+  margin-top: auto;
+  padding: 12px 8px 0;
+  border-top: 1px solid var(--borde);
+}
+
+.barra-filtros__nota {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.nota-desplegable summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.nota-desplegable code {
+  background: var(--activo);
+  padding: 1px 5px;
+  border-radius: 4px;
+}

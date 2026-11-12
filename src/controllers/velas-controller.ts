@@ -6,6 +6,7 @@ import type { AnalisisCargaVelas } from '../services/velas/servicio-velas';
 import { crearElemento } from '../views/dom';
 import { crearVistaVelas, type DatosFormularioVelas } from '../views/velas-view';
 import { construirHorario } from './horario-controller';
+import { crearVisualizadorActual } from './horas-controller';
 
 /** Pantalla de velas: recoge el formulario, pide el análisis y, si el usuario confirma, guarda. */
 export function crearPaginaVelas(aplicacion: Aplicacion): HTMLElement {
@@ -30,7 +31,8 @@ export function crearPaginaVelas(aplicacion: Aplicacion): HTMLElement {
         horario,
         nombreFichero: datos.fichero.name,
       });
-      vista.mostrarAnalisis(pendiente);
+      const horas = (await crearVisualizadorActual(aplicacion)).conOrigen(pendiente.registro.id, horario);
+      vista.mostrarAnalisis(pendiente, horas);
     } catch (error) {
       informarError(vista, error, 'Fallo inesperado al analizar las velas');
     }
@@ -43,7 +45,7 @@ export function crearPaginaVelas(aplicacion: Aplicacion): HTMLElement {
       await servicio.guardar(pendiente);
       vista.mostrarGuardado(pendiente.registro);
       pendiente = null;
-      vista.mostrarCargas(await servicio.listarCargas());
+      vista.mostrarCargas(await servicio.listarCargas(), await crearVisualizadorActual(aplicacion));
     } catch (error) {
       informarError(vista, error, 'Fallo inesperado al guardar las velas');
     }
@@ -60,7 +62,7 @@ export function crearPaginaVelas(aplicacion: Aplicacion): HTMLElement {
     const activos = [...new Set(datos.operaciones.map((operacion) => operacion.activo))].sort();
     vista = crearVistaVelas({ temporalidades: TEMPORALIDADES, horarios: HORARIOS_PREDEFINIDOS, activos, alAnalizar, alGuardar });
     contenedor.replaceChildren(vista.elemento);
-    vista.mostrarCargas(await servicio.listarCargas());
+    vista.mostrarCargas(await servicio.listarCargas(), await crearVisualizadorActual(aplicacion));
   }
 
   iniciar().catch((error: unknown) => {

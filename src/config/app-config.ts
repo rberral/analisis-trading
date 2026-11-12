@@ -6,6 +6,7 @@
  * se escriba aquí es público, así que nunca se deben añadir claves ni contraseñas.
  */
 import type { HorarioBroker } from '../core/horario';
+import type { ModoHora } from '../models/visualizacion';
 import type { Plataforma } from '../models/importacion';
 import type { Temporalidad } from '../models/velas';
 
@@ -207,3 +208,22 @@ export const HORARIOS_PREDEFINIDOS: readonly OpcionHorario[] = [
 /** Opciones especiales del selector de horario que no son una zona concreta. */
 export const OPCION_OTRA_ZONA = 'otra_zona';
 export const OPCION_OTRA_REGLA = 'otra_regla';
+
+export interface OpcionModoHora {
+  readonly id: ModoHora;
+  readonly nombre: string;
+  /** Cómo se escribe junto a las horas: «Apertura (hora del broker)». */
+  readonly etiqueta: string;
+}
+
+/** Cómo se muestran las horas. Los datos no cambian: solo la visualización. */
+export const VISUALIZACION_HORAS = {
+  inicial: 'utc' as ModoHora,
+  zonaEspana: 'Europe/Madrid',
+  claveAlmacenamiento: 'modo-horas',
+  modos: [
+    { id: 'utc', nombre: 'UTC', etiqueta: 'UTC' },
+    { id: 'broker', nombre: 'Hora del broker (como en MetaTrader)', etiqueta: 'hora del broker' },
+    { id: 'espana', nombre: 'Hora de España', etiqueta: 'hora de España' },
+  ] as readonly OpcionModoHora[],
+};
