@@ -226,3 +226,18 @@ export const VISUALIZACION_HORAS = {
     { id: 'espana', nombre: 'Hora de España', etiqueta: 'hora de España' },
   ] as readonly OpcionModoHora[],
 };
+
+/** Exportación a TradingView (script Pine). */
+export const EXPORTACION_TRADINGVIEW = {
+  /** Cada operación usa 2 cajas y 2 líneas/etiquetas: con el límite de 500 de Pine caben 250. */
+  maximoOperacionesPorScript: 250,
+  /** Pine limita las cadenas de texto a ~4096 caracteres; los datos se parten en trozos más cortos. */
+  tamanoTrozo: 3500,
+  /** Ancho de las cajas de cada operación, en barras del gráfico (ajustable luego en TradingView). */
+  anchoCajaBarras: 20,
+  /**
+   * Nombre en TradingView de los activos cuyo nombre en el broker es distinto. Si no aparece aquí se usa
+   * el del broker. El usuario puede cambiarlo en la pantalla antes de generar.
+   */
+  simbolosTradingView: {} as Readonly<Record<string, string>>,
+} as const;

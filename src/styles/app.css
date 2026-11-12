@@ -388,3 +388,18 @@ select {
   padding: 1px 5px;
   border-radius: 4px;
 }
+
+.lista-exportar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fila-exportar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--borde);
+}

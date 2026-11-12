@@ -68,9 +68,17 @@ Para probar la versión de producción (con la política de seguridad activa) en
 
 Todas las horas se guardan en **UTC**: al importar un informe o cargar velas se convierten con el horario del servidor del broker que eliges. En el menú lateral, **Mostrar horas en** permite verlas en UTC (por defecto), en hora del broker (como en MetaTrader) o en hora de España; solo cambia la visualización y la elección se recuerda en el navegador. Los periodos de los filtros siempre se cuentan en UTC.
 
+## Exportar a TradingView
+
+La pantalla **Exportar a TradingView** usa los mismos filtros (periodo, año, activo, cierre) y genera un script Pine v6 por activo, que dibuja cada operación (zonas de TP y SL, entrada, SL movido, salida y tabla de estadísticas). Pasos: elige filtros, ajusta el nombre del activo en TradingView si difiere (p. ej. SP500 → SPX), descarga el `.pine`, pégalo en el Editor de Pine del gráfico de ese activo y pulsa «Añadir al gráfico».
+
+- **Límite:** Pine admite 500 cajas/líneas/etiquetas por script; con 2 de cada por operación caben 250 (`EXPORTACION_TRADINGVIEW` en la configuración). Si un activo tiene más, se reparte en partes (parte 1 de N…) que se añaden como indicadores distintos.
+- **Horas:** el script lleva marcas de tiempo UTC absolutas, así que las operaciones caen siempre en su vela; el eje horario lo decide TradingView (Ajustes del gráfico → Zona horaria). «Horas de las etiquetas» solo cambia los textos de los tooltips (UTC, hora del broker u hora de España).
+- **Precios:** son los de tu broker; el gráfico de TradingView puede diferir unos pips.
+
 ## Panel, Operaciones y Errores
 
-Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. El filtro **Cierre** clasifica por resultado, no por la etiqueta de MetaTrader (que llama «stop loss» también a los stops movidos a beneficio): Take profit (cierre automático con ganancia), Stop loss (con pérdida), Break even (movimiento de precio menor al 0,01 % del valor de la posición; `CLASIFICACION_CIERRE` en la configuración) y Manual. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.
+Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. El filtro **Cierre** clasifica por resultado, no por la etiqueta de MetaTrader (que llama «stop loss» también a los stops movidos a beneficio): Take profit (cierre automático con ganancia), Stop loss (con pérdida), Break even (resultado neto menor al 0,1 % del saldo de la cuenta al abrir; tiene prioridad sobre Manual; `CLASIFICACION_CIERRE` en la configuración) y Manual. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.
 
 Errores detectados solo con el informe (umbrales en `src/config/app-config.ts`): operaciones sin stop loss, pérdidas desproporcionadas, subir lotes tras perder, sobreoperación diaria y perdedoras más largas que las ganadoras.
 

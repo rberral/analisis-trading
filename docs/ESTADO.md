@@ -23,8 +23,10 @@ Diario de trading: web estática (TypeScript + Vite, sin framework; Dexie, Light
 
 Cambios tras las pruebas del usuario (12-nov): gráfico centrado y con 5 decimales; filtro «Cierre» (Take profit / Stop loss / Break even / Manual por resultado, umbral 0,01 %); lista de horarios predefinidos sin valor por defecto (Europa del Este = Europe/Athens, UTC+2 y UTC+3 en verano, es el broker del usuario). Selector «Mostrar horas en» (UTC por defecto / hora del broker / hora de España) en el menú lateral, recordado en el navegador; todo se guarda siempre en UTC. Notas informativas sobre las horas y sobre la regla de clasificación del cierre.
 
+6. Exportar a TradingView (12-nov): pantalla `/exportar` con filtros Periodo/Año/Activo/Cierre, selector de horas de las etiquetas, símbolo de TradingView por activo, un script Pine v6 por activo (plantilla adaptada de Load_Operativas_to_TD en `src/services/exportacion/plantilla-pine.ts`), partes de hasta 250 operaciones, datos en trozos de 3500 caracteres y manual. Timestamps en UTC absoluto (TradingView los muestra en la zona del gráfico); el desfase de las etiquetas va por operación. Validado con el validador de Pine de TradingView (sin errores). Pendiente: probarlo en un gráfico real.
+Regla de Break Even cambiada a la del proyecto de TradingView: |neto| < 0,1 % del saldo al abrir, con prioridad sobre Manual.
+
 ## Pendiente (hoja de ruta)
-6. Exportar a TradingView (Pine Script, límite ≈500 objetos de dibujo, mapeo de símbolos, manual). **Pedido del usuario: al llegar aquí, analizar en qué hora se cargan los gráficos de TradingView (hora española o UTC) y cómo afecta a las marcas de entrada/salida.** Los timestamps del script deben ir en UTC absoluto; TradingView los muestra en la zona horaria configurada en el gráfico.
 7. Copia de seguridad (exportar/importar JSON).
 
 Otros pendientes menores: lista de importaciones anteriores en Importar; resolver horas ambiguas/inexistentes por cambio de horario (hoy solo avisos); actualizar maquetas (quitar el correo de la cabecera, añadir Copia de seguridad).
