@@ -45,3 +45,6 @@ Otros pendientes menores: lista de importaciones anteriores en Importar; resolve
 
 ## Cómo probar en local
 `npm install`, `npm test`, `npm run dev`. No subas informes reales al repositorio (es público): los tests usan `tests/fixtures/informe-mt4.ts`.
+
+## 11. Estilo del Panel
+El estilo se calcula con la duración de cada operación (apertura → cierre) de las operaciones filtradas. Es swing si el % de operaciones de un día o más alcanza `ESTRATEGIA.swingPorcentajeMinimo` (30 %); si no, manda la mediana (scalping < 15 min, intradía < 1 día). El Panel muestra además el reparto de duraciones.
