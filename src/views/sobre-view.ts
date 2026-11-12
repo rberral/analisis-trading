@@ -12,13 +12,13 @@ const PASOS: readonly Paso[] = [
     titulo: 'Importar operaciones',
     ruta: '/importar',
     texto:
-      'Empieza aquí. Carga el informe «Detailed Statement» de MetaTrader 4 (fichero HTML) y elige el broker y la cuenta (uno ya guardado o uno nuevo) y el horario del servidor del broker. Broker + cuenta identifican de dónde vienen los datos y cada combinación se analiza por separado, porque puede usar una estrategia distinta. El horario es obligatorio, porque las horas del informe se convierten a UTC con él. Antes de guardar, la aplicación comprueba que sus cifras coinciden con los totales del propio informe. Puedes importar informes nuevos cuando quieras: las operaciones que ya estaban se actualizan, no se duplican.',
+      'Empieza aquí. Carga el informe «Detailed Statement» de MetaTrader 4 (fichero HTML) y elige el broker y la cuenta (uno ya guardado o uno nuevo) y el horario del servidor del broker. Broker + cuenta identifican de dónde vienen los datos y cada combinación se analiza por separado, porque puede usar una estrategia distinta. El horario es obligatorio, porque las horas del informe se convierten a UTC con él. Antes de guardar, la aplicación comprueba que sus cifras coinciden con los totales del propio informe. Al terminar avisa de las operaciones que aún no tienen velas. Puedes importar informes nuevos cuando quieras: las operaciones que ya estaban se actualizan, no se duplican.',
   },
   {
     titulo: 'Velas y ficheros (opcional)',
     ruta: '/velas',
     texto:
-      'Carga el CSV de velas que exporta MetaTrader 4 (activo, temporalidad y horario del broker). La aplicación comprueba si el horario es el correcto mirando si tus precios de entrada y salida caen dentro de la vela de ese momento. Solo se guardan las velas que rodean a cada operación cerrada. Sin velas todo funciona, pero no habrá gráfico en el detalle ni los análisis que dependen de él.',
+      'Carga el CSV de velas que exporta MetaTrader 4 (activo, temporalidad y horario del broker). La aplicación comprueba si el horario es el correcto mirando si tus precios de entrada y salida caen dentro de la vela de ese momento. Solo se guardan las velas que rodean a cada operación cerrada que existe en ese momento: si importas operaciones nuevas, vuelve a cargar el fichero de velas de su activo. Sin velas todo funciona, pero no habrá gráfico en el detalle ni los análisis que dependen de él.',
   },
   {
     titulo: 'Panel',

@@ -20,13 +20,16 @@ export function crearTarjetaResumen(resumen: ResumenDatos): HTMLElement {
   ]);
 }
 
-export function crearTarjetaExportar(alExportar: () => void): HTMLElement {
+export function crearTarjetaExportar(alExportar: (incluirVelas: boolean) => void): HTMLElement {
   const boton = crearElemento('button', { type: 'button', class: 'boton' }, ['Descargar copia de seguridad']);
-  boton.addEventListener('click', alExportar);
+  const casilla = crearElemento('input', { type: 'checkbox', name: 'Incluir velas', checked: '' }) as HTMLInputElement;
+  boton.addEventListener('click', () => alExportar(casilla.checked));
   return crearElemento('section', { class: 'tarjeta' }, [
     crearElemento('h2', {}, ['Exportar copia de seguridad']),
     crearElemento('p', {}, ['Descarga un fichero con todos tus datos (operaciones, importaciones, velas y brokers). Guárdalo en un sitio seguro.']),
     crearElemento('p', { class: 'texto-suave' }, ['Cada exportación descarga un fichero nuevo con la fecha en el nombre: el navegador no puede actualizar un fichero de tu disco por su cuenta. Quédate con el más reciente.']),
+    crearElemento('label', { class: 'campo-casilla' }, [casilla, ' Incluir las velas guardadas']),
+    crearElemento('p', { class: 'texto-suave' }, ['Las velas pueden hacer el fichero mucho más grande (decenas de megas con muchas operaciones). Sin ellas la copia es ligera, pero al restaurarla tendrás que volver a cargar los ficheros de velas para ver los gráficos.']),
     boton,
   ]);
 }

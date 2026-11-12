@@ -90,6 +90,6 @@ export function crearSinVelas(): HTMLElement {
   const enlace = crearElemento('a', { href: '#/velas', class: 'enlace' }, ['Velas y ficheros']);
   return crearElemento('div', { class: 'tarjeta' }, [
     crearElemento('h2', {}, ['Gráfico']),
-    crearElemento('p', { class: 'texto-suave' }, ['Esta operación no tiene velas guardadas. Cárgalas en ', enlace, ' (con el activo y el rango de fechas que la incluyan).']),
+    crearElemento('p', { class: 'texto-suave' }, ['Esta operación no tiene velas guardadas. Vuelve a cargar el histórico de velas de su activo en ', enlace, ' (el fichero debe incluir sus fechas): las velas solo se guardan para las operaciones que ya existen al cargar el fichero.']),
   ]);
 }

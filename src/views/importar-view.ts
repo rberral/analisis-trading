@@ -5,6 +5,7 @@ import type { Comprobacion } from '../services/importacion/validador-totales';
 import { crearElemento } from './dom';
 import { crearCampoBrokerCuenta } from './broker-cuenta-campo-view';
 import type { CuentaConMoneda } from '../services/consultas/cuentas';
+import type { OperacionesSinVelas } from '../services/velas/cobertura';
 import { crearCampoHorario, type DatosHorario } from './horario-campo-view';
 
 export interface DatosFormularioImportacion extends DatosHorario {
@@ -18,7 +19,8 @@ export interface DatosFormularioImportacion extends DatosHorario {
 export interface VistaImportar {
   readonly elemento: HTMLElement;
   mostrarCargando(): void;
-  mostrarResultado(resultado: ResultadoImportacion): void;
+  /** `sinVelas`: operaciones cerradas de la cuenta que aún no tienen velas guardadas. */
+  mostrarResultado(resultado: ResultadoImportacion, sinVelas: readonly OperacionesSinVelas[]): void;
   mostrarError(mensaje: string): void;
   /** Cuentas ya guardadas, para poder elegirlas en los desplegables. */
   cargarCuentas(cuentas: readonly CuentaConMoneda[]): void;
@@ -146,8 +148,20 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
       botonEnviar.disabled = false;
       zonaResultado.replaceChildren(crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [mensaje]));
     },
-    mostrarResultado(resultado) {
+    mostrarResultado(resultado, sinVelas) {
       botonEnviar.disabled = false;
+      const avisoVelas = sinVelas.length
+        ? [
+            crearElemento('div', { class: 'aviso aviso--atencion' }, [
+              crearElemento('strong', {}, ['Operaciones sin velas']),
+              crearElemento('p', {}, [
+                `Estas operaciones cerradas no tienen velas guardadas, así que su detalle no mostrará el gráfico: ${sinVelas.map((s) => `${s.activo} (${formato(0).format(s.cantidad)})`).join(', ')}. Para verlo, vuelve a cargar el histórico de velas de cada activo en `,
+                crearElemento('a', { href: '#/velas', class: 'enlace' }, ['Velas y ficheros']),
+                '. Las velas solo se guardan para las operaciones que ya existen al cargar el fichero.',
+              ]),
+            ]),
+          ]
+        : [];
       const avisos = resultado.avisos.length
         ? [
             crearElemento('div', { class: 'aviso aviso--atencion' }, [
@@ -171,6 +185,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
           crearResumenValidacion(resultado),
           crearTablaComprobaciones(resultado.comprobaciones),
           ...avisos,
+          ...avisoVelas,
         ]),
       );
     },

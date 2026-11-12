@@ -16,9 +16,9 @@ export function crearPaginaCopia(aplicacion: Aplicacion): HTMLElement {
   const mensaje = (texto: string, atencion = false) =>
     zonaMensaje.replaceChildren(crearElemento('p', { class: atencion ? 'aviso aviso--atencion' : 'aviso', role: atencion ? 'alert' : 'status' }, [texto]));
 
-  async function exportar(): Promise<void> {
+  async function exportar(incluirVelas = true): Promise<void> {
     const fechaMs = Date.now();
-    const copia = await servicio.exportar(fechaMs);
+    const copia = await servicio.exportar(fechaMs, incluirVelas);
     const dia = new Date(fechaMs).toISOString().slice(0, 10);
     descargarTexto(`${COPIA_SEGURIDAD.prefijoFichero}_${dia}.json`, JSON.stringify(copia), 'application/json');
     mensaje('Copia descargada. Guárdala en un sitio seguro.');
@@ -38,7 +38,7 @@ export function crearPaginaCopia(aplicacion: Aplicacion): HTMLElement {
             alcance.tipo === 'todo' ? 'Todos los datos se han borrado.' : alcance.tipo === 'velas' ? 'Las velas se han borrado.' : 'Los datos de esa cuenta se han borrado.',
           );
         }),
-        () => void ejecutar(exportar),
+        () => void ejecutar(() => exportar(true)),
       ),
     );
   }
@@ -74,7 +74,7 @@ export function crearPaginaCopia(aplicacion: Aplicacion): HTMLElement {
     crearElemento('p', { class: 'aviso' }, ['Tus datos viven solo en este navegador (en IndexedDB): no hay servidor ni cuenta. Si borras los datos del sitio, usas otro navegador u otro ordenador, no los verás. La copia de seguridad te permite guardarlos y llevarlos contigo.']),
     zonaMensaje,
     zonaResumen,
-    crearTarjetaExportar(() => void ejecutar(exportar)),
+    crearTarjetaExportar((incluirVelas) => void ejecutar(() => exportar(incluirVelas))),
     tarjetaImportar.elemento,
     zonaBorrado,
   ]);

@@ -53,6 +53,16 @@ describe('ServicioCopia', () => {
     expect(resultado.operacionesNuevas).toBe(3);
   });
 
+  it('exportar sin velas deja fuera las ventanas y los ficheros cargados', async () => {
+    const { servicio } = crear();
+    const completa = await servicio.exportar(1);
+    const ligera = await servicio.exportar(1, false);
+    expect(completa.tablas.ventanasVelas).toHaveLength(2);
+    expect(ligera.tablas.ventanasVelas).toHaveLength(0);
+    expect(ligera.tablas.cargasVelas).toHaveLength(0);
+    expect(ligera.tablas.operaciones).toHaveLength(3);
+  });
+
   it('fusiona: no borra lo existente y no reabre una operación ya cerrada', async () => {
     const { almacen, servicio } = crear();
     const copia = await servicio.exportar(1);

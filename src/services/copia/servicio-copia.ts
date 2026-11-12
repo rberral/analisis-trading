@@ -64,8 +64,11 @@ export class ServicioCopia {
     };
   }
 
-  async exportar(fechaMs: number): Promise<CopiaSeguridad> {
-    return { formato: this.configuracion.formato, version: this.configuracion.version, fechaMs, tablas: await this.almacen.leerTablas() };
+  /** Sin `incluirVelas` la copia es mucho más ligera; al restaurarla habrá que volver a cargar los ficheros de velas. */
+  async exportar(fechaMs: number, incluirVelas = true): Promise<CopiaSeguridad> {
+    const tablas = await this.almacen.leerTablas();
+    const sinVelas: TablasCopia = { ...tablas, ventanasVelas: [], cargasVelas: [] };
+    return { formato: this.configuracion.formato, version: this.configuracion.version, fechaMs, tablas: incluirVelas ? tablas : sinVelas };
   }
 
   /** Lee y valida el texto de una copia, la fusiona con lo que ya hay y guarda. No borra nada de lo existente. */

@@ -3,6 +3,7 @@ import { ErrorDeUsuario } from '../core/errores';
 import { logger } from '../core/logger';
 import type { Aplicacion } from '../composicion';
 import { listarCuentas } from '../services/consultas/cuentas';
+import { operacionesSinVelas } from '../services/velas/cobertura';
 import { construirHorario } from './horario-controller';
 import { crearVistaImportar, type DatosFormularioImportacion } from '../views/importar-view';
 
@@ -29,7 +30,10 @@ export function crearPaginaImportar(aplicacion: Aplicacion): HTMLElement {
         moneda: datos.moneda,
         horario,
       });
-      vista.mostrarResultado(resultado);
+      // Las operaciones recién importadas no tienen velas hasta que se vuelva a cargar el fichero de velas.
+      const [guardados, ventanas] = await Promise.all([aplicacion.lectorDatos.leerTodo(), aplicacion.lectorVentanas.leerVentanas()]);
+      const deLaCuenta = guardados.operaciones.filter((o) => o.broker === resultado.broker && o.cuenta === resultado.cuenta);
+      vista.mostrarResultado(resultado, operacionesSinVelas(deLaCuenta, ventanas));
     } catch (error) {
       if (error instanceof ErrorDeUsuario) {
         vista.mostrarError(error.message);
