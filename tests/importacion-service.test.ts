@@ -112,6 +112,15 @@ describe('ServicioImportacion', () => {
     expect((await servicio.importar(INFORME_MT4_EJEMPLO, { ...OPCIONES, cuenta: 'Otra', moneda: 'eur' })).moneda).toBe('EUR');
   });
 
+  it('si el informe no trae la moneda y no se indica, no importa nada', async () => {
+    const { servicio, repositorio } = crear();
+    const sinMoneda = INFORME_MT4_EJEMPLO.replace('Currency: USD', 'Divisa: -');
+    await expect(servicio.importar(sinMoneda, OPCIONES)).rejects.toThrow(ErrorDeUsuario);
+    expect(repositorio.importaciones).toBe(0);
+    // Indicándola a mano sí se importa.
+    expect((await servicio.importar(sinMoneda, { ...OPCIONES, moneda: 'usd' })).moneda).toBe('USD');
+  });
+
   it('rechaza un horario inválido antes de leer nada', async () => {
     const { servicio, repositorio } = crear();
     await expect(
