@@ -140,9 +140,14 @@ select {
   background: var(--superficie);
   font: inherit;
   font-weight: 400;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .grupo {
+  /* Un fieldset por defecto no se encoge por debajo de su contenido y se salía de la tarjeta. */
+  min-width: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 10px;
