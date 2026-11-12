@@ -29,6 +29,17 @@ export interface OperacionInforme {
   readonly comentario: string;
   /** Cómo se cerró; null si sigue abierta. */
   readonly cierrePor: CierrePor | null;
+  /** true si la plataforma no informa de stop loss ni take profit (Quantfury): su ausencia no es un error del usuario. */
+  readonly sinNivelesDeRiesgo?: boolean;
+  /**
+   * Solo en plataformas con varias monedas (Quantfury): moneda en la que el informe da el resultado.
+   * Si difiere de la moneda de la cuenta, `beneficio` ya está convertido (ver `beneficioOrigen`).
+   */
+  readonly monedaOrigen?: string;
+  /** Resultado tal como aparece en el informe, antes de convertirlo. Solo si hubo conversión. */
+  readonly beneficioOrigen?: number;
+  /** Cuántas unidades de la moneda de la cuenta vale una de `monedaOrigen` en el cambio aplicado. */
+  readonly tipoCambio?: number;
 }
 
 /** Ingreso, retirada o dividendo: aparece en el informe, pero no es una operación. */

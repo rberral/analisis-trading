@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ParserQuantfury } from '../src/adapters/statement-parsers/quantfury-texto-parser';
 import { ParserMt4 } from '../src/adapters/statement-parsers/mt4-html-parser';
 import { ErrorDeUsuario } from '../src/core/errores';
 import type { OperacionGuardada } from '../src/models/operacion';
@@ -53,7 +54,7 @@ function informeConLaAbiertaCerrada(): string {
 
 function crear() {
   const repositorio = new RepositorioEnMemoria();
-  const servicio = new ServicioImportacion({ mt4: new ParserMt4() }, repositorio);
+  const servicio = new ServicioImportacion({ mt4: new ParserMt4(), quantfury: new ParserQuantfury() }, repositorio);
   return { repositorio, servicio };
 }
 

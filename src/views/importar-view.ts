@@ -22,6 +22,8 @@ export interface VistaImportar {
   /** `sinVelas`: operaciones cerradas de la cuenta que aún no tienen velas guardadas. */
   mostrarResultado(resultado: ResultadoImportacion, sinVelas: readonly OperacionesSinVelas[]): void;
   mostrarError(mensaje: string): void;
+  /** Pide un cambio fijo por moneda cuando no se han podido obtener los cambios automáticos. */
+  pedirCambios(mensaje: string, monedas: readonly string[], destino: string, alConfirmar: (cambios: Readonly<Record<string, string>>) => void): void;
   /** Cuentas ya guardadas, para poder elegirlas en los desplegables. */
   cargarCuentas(cuentas: readonly CuentaConMoneda[]): void;
 }
@@ -101,6 +103,17 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   const campoFichero = crearControl<HTMLInputElement>('input', { type: 'file', name: 'fichero', accept: '.htm,.html' });
   const campoBrokerCuenta = crearCampoBrokerCuenta();
   const campoHorario = crearCampoHorario(opciones.horarios);
+  const notaPlataforma = crearElemento('p', { class: 'texto-suave', hidden: '' });
+  // Cada plataforma entrega un tipo de fichero, y algunas ya dan las horas en un huso fijo.
+  const ajustarPlataforma = () => {
+    const plataforma = opciones.plataformas.find((opcion) => opcion.valor === selectorPlataforma.value);
+    campoFichero.accept = plataforma?.tipoFichero === 'pdf' ? '.pdf' : '.htm,.html';
+    campoHorario.elemento.hidden = plataforma?.horarioFijo !== undefined;
+    notaPlataforma.hidden = plataforma?.nota === undefined;
+    notaPlataforma.replaceChildren(plataforma?.nota ?? '');
+  };
+  selectorPlataforma.addEventListener('change', ajustarPlataforma);
+  ajustarPlataforma();
 
   const botonEnviar = crearControl<HTMLButtonElement>('button', { type: 'submit', class: 'boton' });
   botonEnviar.append('Importar y validar');
@@ -108,6 +121,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   const formulario = crearElemento('form', { class: 'tarjeta formulario', novalidate: '' }, [
     crearElemento('h2', {}, ['1 · Datos del fichero']),
     campo('Plataforma', selectorPlataforma),
+    notaPlataforma,
     campo('Fichero del informe', campoFichero),
     campoBrokerCuenta.elemento,
     campoHorario.elemento,
@@ -143,6 +157,23 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     mostrarCargando() {
       botonEnviar.disabled = true;
       zonaResultado.replaceChildren(crearElemento('p', { class: 'texto-suave' }, ['Importando…']));
+    },
+    pedirCambios(mensaje, monedas, destino, alConfirmar) {
+      botonEnviar.disabled = false;
+      const campos = monedas.map((moneda) => ({
+        moneda,
+        control: crearControl<HTMLInputElement>('input', { type: 'text', name: `Cambio ${moneda}`, inputmode: 'decimal', 'aria-label': `1 ${moneda} en ${destino}` }),
+      }));
+      const boton = crearControl<HTMLButtonElement>('button', { type: 'button', class: 'boton' });
+      boton.append('Importar con estos cambios');
+      boton.addEventListener('click', () => alConfirmar(Object.fromEntries(campos.map(({ moneda, control }) => [moneda, control.value]))));
+      zonaResultado.replaceChildren(
+        crearElemento('div', { class: 'tarjeta' }, [
+          crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [mensaje]),
+          ...campos.map(({ moneda, control }) => campo(`1 ${moneda} = … ${destino}`, control)),
+          boton,
+        ]),
+      );
     },
     mostrarError(mensaje) {
       botonEnviar.disabled = false;

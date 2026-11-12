@@ -1,6 +1,6 @@
 # Análisis Trading
 
-Aplicación web que importa las operaciones de una plataforma de trading (primero MetaTrader 4),
+Aplicación web que importa las operaciones de una plataforma de trading (MetaTrader 4 y Quantfury),
 calcula estadísticas, analiza errores y estrategia y las dibuja sobre un gráfico de velas.
 
 Funciona **entera en el navegador**: no hay servidor ni base de datos externa. Tus datos se guardan
@@ -49,6 +49,12 @@ En la pantalla **Importar** eliges el informe HTML (se recomienda el *Detailed S
 El fichero no se guarda: se lee, se importa y se descarta. Los datos quedan en el navegador (IndexedDB).
 
 Las pruebas usan un informe inventado (`tests/fixtures/informe-mt4.ts`); no subas informes reales al repositorio.
+
+### Importar desde Quantfury (PDF)
+
+Se elige la plataforma **Quantfury (informe PDF)** y el *Informe del historial de trading*. El PDF se lee en el navegador con `pdf.js` (se carga solo al importar un PDF; el fichero no sale del navegador). Cada **posición** (apertura, ampliaciones, reducciones y cierre, hasta su fila «Total») se guarda como una operación: apertura = primera fila, cierre = última, precio de entrada y de salida = medias ponderadas por cantidad, resultado = el «Total» del informe. Las posiciones de «Posiciones Abiertas» se guardan como abiertas (sin resultado). El identificador es `ACTIVO-fechaDeApertura`, porque Quantfury no numera las posiciones; así una posición abierta se cierra sola al importar un PDF posterior. Las horas están en UTC (no se pregunta el horario).
+
+El informe mezcla monedas (USDT, USD, EUR, JPY…) y la aplicación exige una moneda por cuenta: se escribe la **moneda de la cuenta** al importar y el resultado de las operaciones en otras monedas se convierte con el **cambio del día de cierre** del Banco Central Europeo (Frankfurter, solo al importar; USDT cuenta como USD, ver `CAMBIO_MONEDAS.equivalencias`). Se guarda también el importe original, la moneda original y el cambio aplicado. Sin conexión, la aplicación pide un cambio fijo por moneda. Las cifras de comprobación (número de posiciones y resultado) se comparan con los importes originales del PDF. Quantfury no informa de stop loss ni take profit: no se analizan, y la «Cuenta» no viene en el PDF, así que se escribe a mano. Las pruebas usan un fragmento con el nombre cambiado (`tests/fixtures/quantfury-informe.ts`).
 
 ## Velas y ficheros (MetaTrader 4)
 

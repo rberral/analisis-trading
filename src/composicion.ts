@@ -46,10 +46,11 @@ export function crearAplicacion(): Aplicacion {
   const repositorio = new RepositorioOperacionesDexie(baseDeDatos);
   const lectorDatos = new LectorDexie(baseDeDatos);
   const preferencias = new PreferenciasNavegador();
+  const proveedorCambio = new ProveedorFrankfurter(CAMBIO_MONEDAS.urlApi, CAMBIO_MONEDAS.urlHistorica, CAMBIO_MONEDAS.diasPorConsulta);
   return {
     baseDeDatos,
-    servicioCambio: new ServicioCambio(preferencias, new ProveedorFrankfurter(CAMBIO_MONEDAS.urlApi), CAMBIO_MONEDAS),
-    servicioImportacion: new ServicioImportacion(crearParsers(), repositorio),
+    servicioCambio: new ServicioCambio(preferencias, proveedorCambio, CAMBIO_MONEDAS),
+    servicioImportacion: new ServicioImportacion(crearParsers(), repositorio, { proveedor: proveedorCambio, equivalencias: CAMBIO_MONEDAS.equivalencias }),
     servicioCopia: new ServicioCopia(new AlmacenDexie(baseDeDatos), COPIA_SEGURIDAD),
     servicioVelas: new ServicioVelas(new ParserVelasMt4Csv(), lectorDatos, new RepositorioVelasDexie(baseDeDatos), TEMPORALIDADES),
     lectorDatos,

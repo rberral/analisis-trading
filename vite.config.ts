@@ -5,7 +5,7 @@ import { CAMBIO_MONEDAS } from './src/config/app-config';
 // La única conexión externa permitida es la del conversor de moneda (CAMBIO_MONEDAS en la configuración).
 // Se añade únicamente al compilar, porque el servidor de desarrollo necesita scripts propios.
 const POLITICA_CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; worker-src 'self' blob:; " +
   `connect-src 'self' ${new URL(CAMBIO_MONEDAS.urlApi).origin}; object-src 'none'; base-uri 'self'; form-action 'self'`;
 
 function insertarCspEnProduccion(): Plugin {

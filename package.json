@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "dexie": "4.0.10",
-    "lightweight-charts": "4.2.1"
+    "lightweight-charts": "4.2.1",
+    "pdfjs-dist": "4.10.38"
   },
   "devDependencies": {
     "typescript": "5.6.3",

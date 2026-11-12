@@ -45,4 +45,6 @@ export interface InformeParseado {
   readonly totales: TotalesInforme;
   /** true si el informe incluye el bloque de detalles (el «detallado»). */
   readonly tieneBloqueDetalle: boolean;
+  /** Observaciones del lector (por ejemplo, una posición cuya suma no coincide con su total). */
+  readonly avisos?: readonly string[];
 }

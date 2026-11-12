@@ -35,7 +35,8 @@ const MS_POR_MINUTO = 60_000;
  * falta de disciplina. Un stop loss movido a break even no cuenta: sigue siendo un precio.
  */
 function detectarSinStopLoss(operaciones: readonly OperacionGuardada[], umbrales: Umbrales): ErrorDetectado[] {
-  const sinStop = operaciones.filter((o) => o.stopLoss === null);
+  // Si la plataforma no informa de stops (Quantfury), que falten no demuestra nada.
+  const sinStop = operaciones.filter((o) => o.stopLoss === null && o.sinNivelesDeRiesgo !== true);
   const esRapida = (o: OperacionGuardada) =>
     (o.cierreUtc ?? o.aperturaUtc) - o.aperturaUtc <= umbrales.minutosAperturaErronea * MS_POR_MINUTO;
   const erroneas = sinStop.filter(esRapida);

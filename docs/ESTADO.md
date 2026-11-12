@@ -48,3 +48,6 @@ Otros pendientes menores: lista de importaciones anteriores en Importar; resolve
 
 ## 12. Exportar: generación bajo demanda
 La pantalla Exportar no calcula nada al abrirse ni al cambiar opciones: los scripts Pine se generan solo al pulsar «Generar script». Si se cambia un filtro, la hora o un símbolo, el resultado anterior se retira y se pide generar de nuevo.
+
+## 13. Importación de Quantfury (PDF)
+Lector de texto (`quantfury-texto-parser.ts`), lector PDF con `pdfjs-dist` (`adapters/pdf/`, carga diferida), conversión de moneda con el cambio del día de cierre del BCE (`conversion-moneda.ts`, `ProveedorFrankfurter.obtenerSerie`; cambio fijo manual si no hay conexión), horario UTC fijo, `sinNivelesDeRiesgo` para no marcar «sin stop loss». Probado con el PDF real de 97 páginas (1.123 posiciones cerradas + 13 abiertas; las comprobaciones coinciden). **Sin verificar en navegador**: lectura del PDF con pdf.js en el navegador, la respuesta real de Frankfurter para rangos, y el CSP con el worker de pdf.js. Hay que ejecutar `npm install` para actualizar `package-lock.json` (nueva dependencia `pdfjs-dist`).

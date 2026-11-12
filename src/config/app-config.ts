@@ -64,11 +64,24 @@ export const SECCIONES: readonly Seccion[] = [
 export interface OpcionPlataforma {
   readonly valor: Plataforma;
   readonly nombre: string;
+  /** Formato del fichero que da la plataforma: decide cómo se lee y qué ficheros admite el formulario. */
+  readonly tipoFichero: 'html' | 'pdf';
+  /** Si la plataforma da siempre las horas en un mismo huso, no se le pregunta al usuario. */
+  readonly horarioFijo?: HorarioBroker;
+  /** Explicación que se muestra al elegir la plataforma. */
+  readonly nota?: string;
 }
 
 /** Plataformas de las que se puede importar un informe. Para añadir otra: un parser y una entrada aquí. */
 export const PLATAFORMAS: readonly OpcionPlataforma[] = [
-  { valor: 'mt4', nombre: 'MetaTrader 4 (informe HTML)' },
+  { valor: 'mt4', nombre: 'MetaTrader 4 (informe HTML)', tipoFichero: 'html' },
+  {
+    valor: 'quantfury',
+    nombre: 'Quantfury (informe PDF)',
+    tipoFichero: 'pdf',
+    horarioFijo: { tipo: 'zona', zona: 'UTC' },
+    nota: 'El informe de Quantfury da las horas en UTC y mezcla monedas (USD, EUR, USDT…). Indica la moneda de la cuenta: los resultados en otras monedas se convierten con el cambio del día de cierre del Banco Central Europeo (USDT cuenta como USD) y se guarda también el importe original. Cada posición (apertura, ampliaciones y cierre) se importa como una operación.',
+  },
 ];
 
 /**
@@ -263,6 +276,12 @@ export const CAMBIO_MONEDAS = {
   monedaDestino: 'EUR',
   /** Si se cambia el servidor, también se permite en la política de seguridad (vite.config.ts lo lee de aquí). */
   urlApi: 'https://api.frankfurter.dev/v1/latest',
+  /** Cambios de un rango de fechas (…/v1/AAAA-MM-DD..AAAA-MM-DD). Mismo servidor que `urlApi`. */
+  urlHistorica: 'https://api.frankfurter.dev/v1',
+  /** Días por consulta: el servicio agrupa por semanas los rangos largos, y así se obtiene un dato por día. */
+  diasPorConsulta: 85,
+  /** Monedas que se tratan como otra 1 a 1 al importar (el informe de Quantfury da las criptos en USDT). */
+  equivalencias: { USDT: 'USD' } as Readonly<Record<string, string>>,
   /** El cambio elegido se recuerda en el navegador con esta clave más la moneda («cambio-USD»). */
   prefijoClave: 'cambio-',
 } as const;

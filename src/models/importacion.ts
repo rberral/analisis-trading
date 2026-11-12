@@ -1,6 +1,6 @@
 import type { HorarioBroker } from '../core/horario';
 
-export type Plataforma = 'mt4';
+export type Plataforma = 'mt4' | 'quantfury';
 
 export interface MovimientoGuardado {
   /** "broker:cuenta:ticket" */

@@ -14,6 +14,7 @@ import type {
 } from '../../models/importacion';
 import type { OperacionGuardada, OperacionInforme } from '../../models/operacion';
 import { calcularEstadisticas } from '../estadisticas/calculadora-estadisticas';
+import { convertirOperaciones, type ProveedorTasasHistoricas } from './conversion-moneda';
 import type { ParserInforme, RepositorioOperaciones } from './puertos';
 import { calcularBalanceInicial, validarTotales, type Comprobacion } from './validador-totales';
 
@@ -27,6 +28,8 @@ export interface OpcionesImportacion {
   /** Moneda de la cuenta; si va vacía se usa la que trae el informe. */
   readonly moneda: string;
   readonly horario: HorarioBroker;
+  /** Solo si el informe mezcla monedas: cambio fijo por moneda (unidades de la moneda de la cuenta por cada una). */
+  readonly cambiosManuales?: Readonly<Record<string, number>>;
 }
 
 export interface ResultadoImportacion {
@@ -43,6 +46,14 @@ export interface ResultadoImportacion {
   readonly tieneBloqueDetalle: boolean;
   readonly comprobaciones: readonly Comprobacion[];
   readonly avisos: readonly string[];
+  /** Operaciones cuyo resultado se ha convertido a la moneda de la cuenta. */
+  readonly convertidas: number;
+}
+
+/** Cómo se parecen entre sí las monedas del informe y las que admite el proveedor de cambios. */
+export interface ConfiguracionConversion {
+  readonly proveedor: ProveedorTasasHistoricas | null;
+  readonly equivalencias: Readonly<Record<string, string>>;
 }
 
 const TEXTO_ESTADO_HORA: Record<Exclude<EstadoHora, 'normal'>, string> = {
@@ -54,6 +65,7 @@ export class ServicioImportacion {
   constructor(
     private readonly parsers: Readonly<Record<Plataforma, ParserInforme>>,
     private readonly repositorio: RepositorioOperaciones,
+    private readonly conversion: ConfiguracionConversion = { proveedor: null, equivalencias: {} },
   ) {}
 
   async importar(contenido: string, opciones: OpcionesImportacion): Promise<ResultadoImportacion> {
@@ -87,9 +99,19 @@ export class ServicioImportacion {
       throw new ErrorDeUsuario(`La cuenta ${broker} · ${cuenta} ya está guardada en ${monedaGuardada} y este informe es en ${moneda}. Revisa el nombre de la cuenta o la moneda.`);
     }
     const propietaria = { broker, cuenta, moneda };
-    const operaciones = [...informe.cerradas, ...informe.abiertas].map((operacion) =>
-      aOperacionGuardada(operacion, propietaria, importacionId, aUtc),
-    );
+    const convertido = await convertirOperaciones([...informe.cerradas, ...informe.abiertas], {
+      monedaCuenta: moneda,
+      equivalencias: this.conversion.equivalencias,
+      cambiosManuales: opciones.cambiosManuales ?? {},
+      proveedor: this.conversion.proveedor,
+    });
+    if (convertido.convertidas > 0) {
+      avisos.push(
+        `${convertido.convertidas} operaciones en ${convertido.monedasConvertidas.join(', ')} se han convertido a ${moneda}; se guarda también el importe original. Las cifras de la tabla de comprobación se comparan con los importes originales, sin convertir.`,
+      );
+    }
+    avisos.push(...(informe.avisos ?? []));
+    const operaciones = convertido.operaciones.map((operacion) => aOperacionGuardada(operacion, propietaria, importacionId, aUtc));
     const movimientos: MovimientoGuardado[] = informe.movimientos.map((movimiento) => ({
       id: `${broker}:${cuenta}:${movimiento.ticket}`,
       broker,
@@ -168,6 +190,7 @@ export class ServicioImportacion {
       tieneBloqueDetalle: informe.tieneBloqueDetalle,
       comprobaciones,
       avisos,
+      convertidas: convertido.convertidas,
     };
   }
 }
