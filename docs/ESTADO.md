@@ -19,9 +19,9 @@ Diario de trading: web estática (TypeScript + Vite, sin framework; Dexie, Light
 3. Panel, Operaciones y Errores y consejos, con filtros por periodo, activo y cuenta. Errores solo con el informe: sin stop loss, aperturas erróneas (sin SL cerradas en < 5 min), pérdidas desproporcionadas, subir lotes tras perder, sobreoperación, perdedoras más largas que ganadoras. Umbrales en `src/config/app-config.ts`.
 
 4. Velas: carga del CSV de MT4 (activo, temporalidad, horario, broker opcional), comprobación del horario con desfases -3..+3 h (no corrige sola), y guardado solo de las ventanas de velas por operación cerrada (IndexedDB v3). Pantalla «Velas y ficheros» con la lista de cargas.
+5. Detalle de operación (gráfico con Lightweight Charts, ruta `#/operaciones/<id>`), MFE/MAE, qué pasó tras cerrar a mano, salidas anticipadas en Errores y perfil de la operativa en el Panel. Pendiente de verificar en navegador: el gráfico (la librería no se pudo probar en el contenedor) y que funcione con la CSP de producción (`npm run build` + `npm run preview`).
 
 ## Pendiente (hoja de ruta)
-5. Detalle de operación, MAE/MFE, salidas anticipadas, detección de estrategia.
 6. Exportar a TradingView (Pine Script, límite ≈500 objetos de dibujo, mapeo de símbolos, manual).
 7. Copia de seguridad (exportar/importar JSON).
 

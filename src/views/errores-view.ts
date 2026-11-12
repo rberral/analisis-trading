@@ -22,7 +22,7 @@ function crearTarjetaError(error: ErrorDetectado): HTMLElement {
   return crearElemento('div', { class: 'tarjeta' }, lineas);
 }
 
-export function crearContenidoErrores(errores: readonly ErrorDetectado[], totalOperaciones: number): HTMLElement {
+export function crearContenidoErrores(errores: readonly ErrorDetectado[], totalOperaciones: number, hayVelas: boolean): HTMLElement {
   if (totalOperaciones < UMBRALES_ERRORES.minimoOperaciones) {
     return crearElemento('p', { class: 'aviso' }, [
       `Se necesitan al menos ${UMBRALES_ERRORES.minimoOperaciones} operaciones cerradas para analizar errores (ahora hay ${totalOperaciones}).`,
@@ -34,7 +34,9 @@ export function crearContenidoErrores(errores: readonly ErrorDetectado[], totalO
   return crearElemento('div', {}, [
     ...errores.map(crearTarjetaError),
     crearElemento('p', { class: 'texto-suave' }, [
-      'Son criterios orientativos calculados solo con el informe. Los que necesitan velas (salidas anticipadas, recorrido máximo en contra) llegarán más adelante.',
+      hayVelas
+        ? 'Son criterios orientativos. Las salidas anticipadas se calculan con las velas que hayas cargado.'
+        : 'Son criterios orientativos calculados solo con el informe. Carga velas en «Velas y ficheros» para detectar también las salidas anticipadas.',
     ]),
   ]);
 }

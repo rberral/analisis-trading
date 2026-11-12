@@ -54,6 +54,16 @@ En **Velas y ficheros** cargas el CSV de velas que exporta MetaTrader 4 (Centro 
 
 El fichero de velas **no se guarda**: solo se conservan, para cada operación cerrada, las velas de su duración más 20 antes y 20 después (como máximo 3 000). Los parámetros están en `VELAS` (`src/config/app-config.ts`).
 
+## Detalle de operación, recorrido y perfil
+
+Pulsando el ticket en **Operaciones** se abre el detalle: datos de la operación y, si has cargado velas, un gráfico con entrada, salida, stop loss y take profit (Lightweight Charts, horas en UTC). Con las velas se calcula:
+
+- **Recorrido del precio (MFE/MAE):** máximo a favor y en contra, y qué parte del camino hasta el TP y el SL llegó a recorrer. Es un mínimo: solo cuentan las velas completas dentro de la operación, más los precios de entrada y salida.
+- **Qué pasó después de cerrar a mano** una operación con take profit (si llegó al TP o al SL en las velas guardadas posteriores). Con esto, **Errores y consejos** detecta las salidas anticipadas.
+- **Perfil de tu operativa** en el Panel: estilo (scalping, intradía, swing), sesiones, uso de SL y TP, relación objetivo/riesgo y desde dónde entras respecto a las últimas velas. Describe lo que muestran los datos; no pone etiquetas de estrategia. Criterios en `ESTRATEGIA` (`src/config/app-config.ts`).
+
+Para probar la versión de producción (con la política de seguridad activa) en local: `npm run build` y `npm run preview`.
+
 ## Panel, Operaciones y Errores
 
 Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.

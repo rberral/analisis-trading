@@ -1,16 +1,23 @@
-import { UMBRALES_ERRORES } from '../config/app-config';
+import { ESTRATEGIA, TEMPORALIDADES, UMBRALES_ERRORES } from '../config/app-config';
 import type { Aplicacion } from '../composicion';
 import { logger } from '../core/logger';
 import { analizarPeriodo, opcionesDelFiltro, type AnalisisPeriodo } from '../services/consultas/analisis-periodo';
 import type { DatosGuardados } from '../services/consultas/puertos';
+import type { VentanaVelas } from '../models/velas';
+import { crearPerfil } from '../services/analisis/perfil-estrategia';
+import { duracionDeTemporalidad, indexarVentanas } from '../services/analisis/ventanas-operacion';
 import { detectarErrores } from '../services/errores/detector-errores';
+import { detectarSalidasAnticipadas } from '../services/errores/detector-salidas';
 import { crearElemento } from '../views/dom';
 import { crearContenidoErrores } from '../views/errores-view';
 import { crearBarraFiltros } from '../views/filtros-view';
 import { crearContenidoOperaciones } from '../views/operaciones-view';
 import { crearContenidoPanel } from '../views/panel-view';
 
-type Dibujar = (analisis: AnalisisPeriodo) => HTMLElement;
+/** Una ventana de velas por operación (la más detallada); vacío si no se han cargado velas. */
+type VentanasPorOperacion = ReadonlyMap<string, VentanaVelas>;
+
+type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion) => HTMLElement;
 
 /**
  * Pantalla con barra de filtros arriba y contenido que depende del filtro.
@@ -21,17 +28,18 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
   const zonaContenido = crearElemento('div', { 'aria-live': 'polite' }, [crearElemento('p', { class: 'texto-suave' }, ['Cargando…'])]);
   const pagina = crearElemento('div', {}, [crearElemento('h1', { class: 'titulo-pagina' }, [titulo]), zonaBarra, zonaContenido]);
 
-  function mostrar(datos: DatosGuardados): void {
+  function mostrar(datos: DatosGuardados, ventanas: VentanasPorOperacion): void {
     const resultado = analizarPeriodo(datos, aplicacion.filtro.obtener());
     zonaContenido.replaceChildren(
       typeof resultado === 'string'
         ? crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [resultado])
-        : dibujar(resultado),
+        : dibujar(resultado, ventanas),
     );
   }
 
   async function cargar(): Promise<void> {
     const datos = await aplicacion.lectorDatos.leerTodo();
+    const ventanas = indexarVentanas(await aplicacion.lectorVentanas.leerVentanas(), TEMPORALIDADES);
     if (datos.operaciones.length === 0) {
       zonaContenido.replaceChildren(
         crearElemento('p', { class: 'aviso' }, ['Todavía no hay operaciones. Empieza por '], ),
@@ -45,11 +53,11 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
         filtro: aplicacion.filtro.obtener(),
         alCambiar: (filtro) => {
           aplicacion.filtro.fijar(filtro);
-          mostrar(datos);
+          mostrar(datos, ventanas);
         },
       }),
     );
-    mostrar(datos);
+    mostrar(datos, ventanas);
   }
 
   cargar().catch((error: unknown) => {
@@ -59,16 +67,24 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
   return pagina;
 }
 
+const duracionDeVentana = (ventana: VentanaVelas): number => duracionDeTemporalidad(ventana.temporalidad, TEMPORALIDADES);
+
 export const crearPaginaPanel = (aplicacion: Aplicacion): HTMLElement =>
-  crearPaginaFiltrada(aplicacion, 'Panel', crearContenidoPanel);
+  crearPaginaFiltrada(aplicacion, 'Panel', (analisis, ventanas) =>
+    crearContenidoPanel(analisis, crearPerfil(analisis.operaciones, ventanas, duracionDeVentana, ESTRATEGIA)),
+  );
 
 export const crearPaginaOperaciones = (aplicacion: Aplicacion): HTMLElement =>
   crearPaginaFiltrada(aplicacion, 'Operaciones', crearContenidoOperaciones);
 
 export const crearPaginaErrores = (aplicacion: Aplicacion): HTMLElement =>
-  crearPaginaFiltrada(aplicacion, 'Errores y consejos', (analisis) =>
+  crearPaginaFiltrada(aplicacion, 'Errores y consejos', (analisis, ventanas) =>
     crearContenidoErrores(
-      detectarErrores(analisis.operaciones, analisis.estadisticas, UMBRALES_ERRORES),
+      [
+        ...detectarErrores(analisis.operaciones, analisis.estadisticas, UMBRALES_ERRORES),
+        ...detectarSalidasAnticipadas(analisis.operaciones, ventanas),
+      ],
       analisis.operaciones.length,
+      ventanas.size > 0,
     ),
   );

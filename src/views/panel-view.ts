@@ -1,5 +1,7 @@
 import type { AnalisisPeriodo, PuntoBalance } from '../services/consultas/analisis-periodo';
 import { crearElemento, crearSvg } from './dom';
+import type { PerfilEstrategia } from '../services/analisis/perfil-estrategia';
+import { crearTarjetaPerfil } from './perfil-view';
 import { entero, fechaHoraUtc, importe, porcentaje } from './formato';
 
 function cifra(texto: string, valor: string, clase = ''): HTMLElement {
@@ -43,7 +45,7 @@ function crearCurva(curva: readonly PuntoBalance[], balanceInicial: number): HTM
   ]);
 }
 
-export function crearContenidoPanel(analisis: AnalisisPeriodo): HTMLElement {
+export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEstrategia | null): HTMLElement {
   const e = analisis.estadisticas;
   if (e.totalOperaciones === 0) {
     return crearElemento('p', { class: 'aviso' }, ['No hay operaciones cerradas con este filtro.']);
@@ -72,5 +74,6 @@ export function crearContenidoPanel(analisis: AnalisisPeriodo): HTMLElement {
       ]),
     ]),
     crearElemento('div', { class: 'tarjeta' }, [crearElemento('h2', {}, ['Curva de balance']), crearCurva(analisis.curva, analisis.balanceInicial)]),
+    ...(perfil ? [crearTarjetaPerfil(perfil)] : []),
   ]);
 }

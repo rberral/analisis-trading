@@ -11,6 +11,8 @@ import { RepositorioVelasDexie } from './adapters/storage/velas-repositorio';
 import { TEMPORALIDADES } from './config/app-config';
 import { ServicioVelas } from './services/velas/servicio-velas';
 import { LectorDexie } from './adapters/storage/lector-dexie';
+import { LectorVentanasDexie } from './adapters/storage/lector-ventanas-dexie';
+import type { LectorVentanas } from './services/consultas/puertos-ventanas';
 import { AlmacenFiltro } from './services/consultas/almacen-filtro';
 import type { LectorDatos } from './services/consultas/puertos';
 import { ServicioImportacion } from './services/importacion/importacion-service';
@@ -20,6 +22,7 @@ export interface Aplicacion {
   readonly servicioImportacion: ServicioImportacion;
   readonly servicioVelas: ServicioVelas;
   readonly lectorDatos: LectorDatos;
+  readonly lectorVentanas: LectorVentanas;
   /** Filtro elegido por el usuario; se comparte entre pantallas. */
   readonly filtro: AlmacenFiltro;
 }
@@ -33,6 +36,7 @@ export function crearAplicacion(): Aplicacion {
     servicioImportacion: new ServicioImportacion(crearParsers(), repositorio),
     servicioVelas: new ServicioVelas(new ParserVelasMt4Csv(), lectorDatos, new RepositorioVelasDexie(baseDeDatos), TEMPORALIDADES),
     lectorDatos,
+    lectorVentanas: new LectorVentanasDexie(baseDeDatos),
     filtro: new AlmacenFiltro(),
   };
 }

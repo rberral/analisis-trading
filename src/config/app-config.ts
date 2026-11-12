@@ -135,3 +135,37 @@ export const VELAS = {
   /** Porcentaje de precios que deben encajar para dar el horario por correcto. */
   porcentajeMinimoCorrecto: 90,
 } as const;
+
+/** Criterios para describir la operativa. Las sesiones se miden con la hora UTC de apertura. */
+export const ESTRATEGIA = {
+  /** Duración mediana por debajo de la cual se habla de scalping (minutos). */
+  scalpingMinutos: 15,
+  /** Por debajo de un día se habla de intradía; por encima, de swing (minutos). */
+  intradiaMinutos: 1440,
+  sesiones: [
+    { nombre: 'Asia', desdeHora: 0, hastaHora: 7 },
+    { nombre: 'Londres', desdeHora: 7, hastaHora: 12 },
+    { nombre: 'Londres + Nueva York', desdeHora: 12, hastaHora: 16 },
+    { nombre: 'Nueva York', desdeHora: 16, hastaHora: 21 },
+    { nombre: 'Cierre de mercado', desdeHora: 21, hastaHora: 24 },
+  ],
+  /** Velas anteriores a la entrada con las que se mide desde dónde se entra. */
+  velasPreviasEntrada: 20,
+  minimoVelasPrevias: 5,
+  /** Fracción del rango (extremo superior o inferior) que se considera "máximo" o "mínimo". */
+  umbralExtremo: 0.2,
+  minimoMuestrasEntradas: 10,
+} as const;
+
+/** Colores del gráfico de velas (la librería los pide como valores, no como clases de CSS). */
+export const COLORES_GRAFICO = {
+  fondo: '#ffffff',
+  texto: '#14181f',
+  cuadricula: '#eef0f3',
+  velaAlcista: '#15803d',
+  velaBajista: '#b91c1c',
+  entrada: '#1d4ed8',
+  salida: '#7c3aed',
+  stopLoss: '#b91c1c',
+  takeProfit: '#15803d',
+} as const;

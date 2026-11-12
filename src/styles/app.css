@@ -336,3 +336,27 @@ select {
   background: var(--activo);
   font-weight: 600;
 }
+
+/* Fase 5: detalle de operación */
+.grafico {
+  width: 100%;
+  height: 420px;
+}
+
+.tabla-datos {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tabla-datos th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--texto-suave);
+  padding: 6px 16px 6px 0;
+  vertical-align: top;
+  width: 38%;
+}
+
+.tabla-datos td {
+  padding: 6px 0;
+}

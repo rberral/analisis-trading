@@ -16,7 +16,7 @@ function neto(operacion: OperacionGuardada): number {
 function fila(operacion: OperacionGuardada): HTMLElement {
   const resultado = neto(operacion);
   return crearElemento('tr', {}, [
-    celda(operacion.ticket),
+    crearElemento('td', {}, [crearElemento('a', { href: `#/operaciones/${encodeURIComponent(operacion.id)}`, class: 'enlace' }, [operacion.ticket])]),
     celda(operacion.activo),
     celda(operacion.tipo === 'compra' ? 'Compra' : 'Venta'),
     celda(importe(operacion.lotes), 'numero'),

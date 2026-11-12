@@ -1,6 +1,6 @@
 /** Un patrón problemático encontrado en las operaciones, con consejo para corregirlo. */
 export interface ErrorDetectado {
-  readonly codigo: 'sin_stop_loss' | 'apertura_erronea' | 'perdida_desproporcionada' | 'lotes_tras_perdida' | 'sobreoperacion' | 'perdedoras_largas';
+  readonly codigo: 'sin_stop_loss' | 'apertura_erronea' | 'perdida_desproporcionada' | 'lotes_tras_perdida' | 'sobreoperacion' | 'perdedoras_largas' | 'salida_anticipada';
   readonly titulo: string;
   readonly descripcion: string;
   readonly consejo: string;
