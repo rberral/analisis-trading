@@ -138,18 +138,6 @@ describe('crearPerfil', () => {
     expect(entradas.seguimiento).toBe(12);
   });
 
-  it('es swing si buena parte de las operaciones dura un día o más, aunque la mediana sea corta', () => {
-    const DIA = 24 * 60 * MIN;
-    const operaciones = Array.from({ length: 10 }, (_, i) => {
-      const apertura = Date.UTC(2026, 0, 5 + i, 8);
-      return crearOperacion(String(i), { aperturaUtc: apertura, cierreUtc: apertura + (i < 4 ? 2 * DIA : 2 * 60 * MIN) });
-    });
-    const perfil = crearPerfil(operaciones, new Map(), duracion, ESTRATEGIA)!;
-    expect(perfil.duracionMedianaMinutos).toBe(120);
-    expect(perfil.distribucionDuracion.undiaOMas).toBe(40);
-    expect(perfil.estilo).toBe('swing');
-  });
-
   it('devuelve null sin operaciones', () => {
     expect(crearPerfil([], new Map(), duracion, ESTRATEGIA)).toBeNull();
   });

@@ -1,12 +1,11 @@
 import type { EstiloTemporal, PerfilEstrategia } from '../services/analisis/perfil-estrategia';
-import { ESTRATEGIA } from '../config/app-config';
 import { crearElemento } from './dom';
 import { importe, porcentaje } from './formato';
 
 const TEXTO_ESTILO: Record<EstiloTemporal, string> = {
   scalping: 'Scalping: operaciones de pocos minutos',
   intradia: 'Intradía: cierras el mismo día',
-  swing: 'Swing: una parte importante de tus operaciones dura un día o más',
+  swing: 'Swing: mantienes las operaciones varios días',
 };
 
 function fila(nombre: string, valor: string): HTMLElement {
@@ -17,11 +16,6 @@ function textoDuracion(minutos: number): string {
   if (minutos < 60) return `${importe(minutos)} min`;
   if (minutos < 2880) return `${importe(minutos / 60)} h`;
   return `${importe(minutos / 1440)} días`;
-}
-
-function textoDistribucion(perfil: PerfilEstrategia): string {
-  const d = perfil.distribucionDuracion;
-  return `menos de ${ESTRATEGIA.scalpingMinutos} min: ${porcentaje(d.menosDeScalping)} · mismo día: ${porcentaje(d.mismoDia)} · un día o más: ${porcentaje(d.undiaOMas)}`;
 }
 
 function textoEntradas(perfil: PerfilEstrategia): string {
@@ -43,7 +37,6 @@ export function crearTarjetaPerfil(perfil: PerfilEstrategia): HTMLElement {
       crearElemento('tbody', {}, [
         fila('Estilo', TEXTO_ESTILO[perfil.estilo]),
         fila('Duración mediana', textoDuracion(perfil.duracionMedianaMinutos)),
-        fila('Cuánto tardan en cerrarse', textoDistribucion(perfil)),
         fila('Operaciones por día con actividad', importe(perfil.operacionesPorDiaActivo)),
         fila('Compras / ventas', `${porcentaje(perfil.porcentajeCompras)} / ${porcentaje(100 - perfil.porcentajeCompras)}`),
         fila('Lotes habituales (mediana)', importe(perfil.lotesMedianos)),

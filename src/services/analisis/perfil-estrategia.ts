@@ -20,18 +20,10 @@ export interface EntradasRespectoARango {
   readonly enMedio: number;
 }
 
-/** % de operaciones según lo que tardan en cerrarse (suman 100). */
-export interface DistribucionDuracion {
-  readonly menosDeScalping: number;
-  readonly mismoDia: number;
-  readonly undiaOMas: number;
-}
-
 export interface PerfilEstrategia {
   readonly totalOperaciones: number;
   readonly estilo: EstiloTemporal;
   readonly duracionMedianaMinutos: number;
-  readonly distribucionDuracion: DistribucionDuracion;
   readonly operacionesPorDiaActivo: number;
   readonly porcentajeCompras: number;
   readonly lotesMedianos: number;
@@ -52,16 +44,7 @@ function mediana(valores: readonly number[]): number {
 
 const MS_POR_MINUTO = 60_000;
 
-function distribucion(duraciones: readonly number[], parametros: Parametros): DistribucionDuracion {
-  const pct = (cuantas: number) => (cuantas / duraciones.length) * 100;
-  const corta = duraciones.filter((m) => m < parametros.scalpingMinutos).length;
-  const largas = duraciones.filter((m) => m >= parametros.intradiaMinutos).length;
-  return { menosDeScalping: pct(corta), mismoDia: pct(duraciones.length - corta - largas), undiaOMas: pct(largas) };
-}
-
-/** Swing si una parte importante de las operaciones dura un día o más; si no, manda la mediana. */
-export function estiloPorDuracion(minutos: number, reparto: DistribucionDuracion, parametros: Parametros): EstiloTemporal {
-  if (reparto.undiaOMas >= parametros.swingPorcentajeMinimo) return 'swing';
+function estiloPorDuracion(minutos: number, parametros: Parametros): EstiloTemporal {
   if (minutos < parametros.scalpingMinutos) return 'scalping';
   if (minutos < parametros.intradiaMinutos) return 'intradia';
   return 'swing';
@@ -133,15 +116,13 @@ export function crearPerfil(
   if (operaciones.length === 0) return null;
   const duraciones = operaciones.map((o) => ((o.cierreUtc ?? o.aperturaUtc) - o.aperturaUtc) / MS_POR_MINUTO);
   const duracionMediana = mediana(duraciones);
-  const reparto = distribucion(duraciones, parametros);
   const dias = new Set(operaciones.map((o) => new Date(o.aperturaUtc).toISOString().slice(0, 10)));
   const porcentaje = (cuantas: number) => (cuantas / operaciones.length) * 100;
 
   return {
     totalOperaciones: operaciones.length,
-    estilo: estiloPorDuracion(duracionMediana, reparto, parametros),
+    estilo: estiloPorDuracion(duracionMediana, parametros),
     duracionMedianaMinutos: duracionMediana,
-    distribucionDuracion: reparto,
     operacionesPorDiaActivo: operaciones.length / dias.size,
     porcentajeCompras: porcentaje(operaciones.filter((o) => o.tipo === 'compra').length),
     lotesMedianos: mediana(operaciones.map((o) => o.lotes)),

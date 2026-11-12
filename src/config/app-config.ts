@@ -149,8 +149,6 @@ export const ESTRATEGIA = {
   scalpingMinutos: 15,
   /** Por debajo de un día se habla de intradía; por encima, de swing (minutos). */
   intradiaMinutos: 1440,
-  /** Si al menos este % de las operaciones dura un día o más, el estilo es swing aunque la mediana sea corta. */
-  swingPorcentajeMinimo: 30,
   sesiones: [
     { nombre: 'Asia', desdeHora: 0, hastaHora: 7 },
     { nombre: 'Londres', desdeHora: 7, hastaHora: 12 },
