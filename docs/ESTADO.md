@@ -32,6 +32,8 @@ Regla de Break Even cambiada a la del proyecto de TradingView: |neto| < 0,1 % de
 
 9. Moneda y conversor a euros (12-nov): la moneda (del informe o indicada) se guarda con operaciones, movimientos e importaciones; no se mezclan monedas en una cuenta. Tarjeta con conversor orientativo a EUR en Panel/Operaciones/Errores; cambio manual o automático (Frankfurter/BCE, solo al pulsar), recordado en localStorage; CSP de producción permite solo ese origen. No se pudo probar la API desde el contenedor (sin red): verificar en el navegador.
 
+10. Velas y borrado (12-nov): aviso tras importar de operaciones cerradas sin velas (por activo); casilla «Incluir las velas guardadas» al exportar la copia; borrar: Todo / Solo las velas / una cuenta (con casilla «Borrar también las velas de esas operaciones», desmarcada por defecto; al marcarla se recuentan o quitan los registros de ficheros cargados). Las velas se guardan por operación (id broker:cuenta:ticket), no el fichero entero: las operaciones nuevas necesitan recargar el fichero de velas.
+
 ## Pendiente (hoja de ruta)
 
 

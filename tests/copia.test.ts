@@ -86,14 +86,32 @@ describe('ServicioCopia', () => {
     for (const texto of casos) await expect(servicio.importar(texto)).rejects.toThrow(ErrorDeUsuario);
   });
 
-  it('borrar una cuenta conserva las demás y los ficheros de velas', async () => {
+  it('borrar una cuenta conserva las demás y, por defecto, todas las velas', async () => {
     const { almacen, servicio } = crear();
-    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' } });
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' }, borrarVelas: false });
     expect(almacen.tablas.operaciones.map((o) => o.id)).toEqual(['B:2:1']);
     expect(almacen.tablas.movimientos.map((o) => o.id)).toEqual(['B:2:m']);
     expect(almacen.tablas.importaciones.map((o) => o.id)).toEqual(['i2']);
-    expect(almacen.tablas.ventanasVelas.map((o) => o.id)).toEqual(['v2']);
+    expect(almacen.tablas.ventanasVelas.map((o) => o.id)).toEqual(['v1', 'v2']);
     expect(almacen.tablas.cargasVelas).toHaveLength(1);
+  });
+
+  it('borrar una cuenta con su casilla borra solo las velas de sus operaciones y recuenta los ficheros', async () => {
+    const { almacen, servicio } = crear();
+    almacen.tablas.ventanasVelas = [{ id: 'v1', operacionId: 'A:1:1', cargaId: 'c1' }, { id: 'v2', operacionId: 'B:2:1', cargaId: 'c1' }];
+    almacen.tablas.cargasVelas = [{ id: 'c1', ventanasGuardadas: 2, operacionesCubiertas: 2 }];
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' }, borrarVelas: true });
+    expect(almacen.tablas.ventanasVelas.map((v) => v.id)).toEqual(['v2']);
+    expect(almacen.tablas.cargasVelas[0]?.['ventanasGuardadas']).toBe(1);
+    expect(almacen.tablas.cargasVelas[0]?.['operacionesCubiertas']).toBe(1);
+  });
+
+  it('un fichero de velas que se queda sin ventanas desaparece de la lista', async () => {
+    const { almacen, servicio } = crear();
+    almacen.tablas.ventanasVelas = [{ id: 'v1', operacionId: 'A:1:1', cargaId: 'c1' }, { id: 'v2', operacionId: 'B:2:1', cargaId: 'c2' }];
+    almacen.tablas.cargasVelas = [{ id: 'c1', ventanasGuardadas: 1 }, { id: 'c2', ventanasGuardadas: 1 }];
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' }, borrarVelas: true });
+    expect(almacen.tablas.cargasVelas.map((c) => c.id)).toEqual(['c2']);
   });
 
   it('borrar solo las velas deja operaciones y brokers', async () => {
@@ -106,8 +124,8 @@ describe('ServicioCopia', () => {
 
   it('con solo velas guardadas sigue habiendo datos que borrar', async () => {
     const { almacen, servicio } = crear();
-    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' } });
-    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'B', cuenta: '2' } });
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' }, borrarVelas: false });
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'B', cuenta: '2' }, borrarVelas: false });
     const r = await servicio.resumen();
     expect(r.operaciones).toBe(0);
     expect(r.cargasVelas).toBe(1);

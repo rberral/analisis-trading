@@ -35,7 +35,7 @@ export function crearPaginaCopia(aplicacion: Aplicacion): HTMLElement {
           await servicio.borrar(alcance);
           await refrescar();
           mensaje(
-            alcance.tipo === 'todo' ? 'Todos los datos se han borrado.' : alcance.tipo === 'velas' ? 'Las velas se han borrado.' : 'Los datos de esa cuenta se han borrado.',
+            alcance.tipo === 'todo' ? 'Todos los datos se han borrado.' : alcance.tipo === 'velas' ? 'Las velas se han borrado.' : alcance.borrarVelas ? 'Los datos de esa cuenta y sus velas se han borrado.' : 'Los datos de esa cuenta se han borrado.',
           );
         }),
         () => void ejecutar(() => exportar(true)),

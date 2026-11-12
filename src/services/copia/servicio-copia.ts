@@ -35,7 +35,9 @@ export interface ResultadoImportacionCopia {
   readonly operacionesNuevas: number;
 }
 
-export type AlcanceBorrado = { readonly tipo: 'todo' } | { readonly tipo: 'velas' } | { readonly tipo: 'cuenta'; readonly cuenta: CuentaTrading };
+export type AlcanceBorrado = { readonly tipo: 'todo' } | { readonly tipo: 'velas' } | { readonly tipo: 'cuenta'; readonly cuenta: CuentaTrading; readonly borrarVelas: boolean };
+
+const TABLAS_VACIAS = (): TablasCopia => Object.fromEntries(NOMBRES_TABLAS.map((nombre) => [nombre, [] as Fila[]])) as TablasCopia;
 
 const esObjeto = (valor: unknown): valor is Record<string, unknown> => typeof valor === 'object' && valor !== null && !Array.isArray(valor);
 
@@ -106,8 +108,26 @@ export class ServicioCopia {
     await this.almacen.eliminar('movimientos', tablas.movimientos.filter(deLaCuenta).map((m) => m.id));
     await this.almacen.eliminar('importaciones', [...idsImportaciones]);
     await this.almacen.eliminar('instantaneasAbiertas', tablas.instantaneasAbiertas.filter(deLaCuenta).map((i) => i.id));
-    // Las velas de esas operaciones ya no sirven; los ficheros de velas cargados (que no son de un broker) se conservan.
-    await this.almacen.eliminar('ventanasVelas', tablas.ventanasVelas.filter((v) => idsOperaciones.has(String(v['operacionId']))).map((v) => v.id));
+    // Las velas son independientes de las cuentas: solo se borran si se pide. Si no, quedan guardadas
+    // y vuelven a servir si se reimporta la misma cuenta (las operaciones recuperan su identificador).
+    if (alcance.borrarVelas) await this.borrarVelasDe(tablas, idsOperaciones);
+  }
+
+  /** Borra las velas de unas operaciones y deja bien los registros de ficheros cargados (recuenta o quita los que se queden vacíos). */
+  private async borrarVelasDe(tablas: TablasCopia, idsOperaciones: ReadonlySet<string>): Promise<void> {
+    const sobran = tablas.ventanasVelas.filter((v) => idsOperaciones.has(String(v['operacionId'])));
+    const quedan = tablas.ventanasVelas.filter((v) => !idsOperaciones.has(String(v['operacionId'])));
+    await this.almacen.eliminar('ventanasVelas', sobran.map((v) => v.id));
+
+    const restantesPorCarga = new Map<string, number>();
+    for (const ventana of quedan) restantesPorCarga.set(String(ventana['cargaId']), (restantesPorCarga.get(String(ventana['cargaId'])) ?? 0) + 1);
+
+    const vacias = tablas.cargasVelas.filter((c) => !restantesPorCarga.has(c.id));
+    await this.almacen.eliminar('cargasVelas', vacias.map((c) => c.id));
+    const actualizadas = tablas.cargasVelas
+      .filter((c) => restantesPorCarga.has(c.id))
+      .map((c) => ({ ...c, ventanasGuardadas: restantesPorCarga.get(c.id) ?? 0, operacionesCubiertas: restantesPorCarga.get(c.id) ?? 0 }));
+    await this.almacen.guardarTablas({ ...TABLAS_VACIAS(), cargasVelas: actualizadas });
   }
 
   private leerCopia(texto: string): CopiaSeguridad {

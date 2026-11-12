@@ -83,8 +83,16 @@ export function crearTarjetaBorrar(resumen: ResumenDatos, palabra: string, alBor
   selector.append(crearElemento('option', { value: VELAS }, ['Solo las velas (ficheros cargados y velas de las operaciones)']));
   for (const c of resumen.cuentas) selector.append(crearElemento('option', { value: claveCuenta(c.cuenta) }, [`Solo ${textoCuenta(c.cuenta)}`]));
 
+  const casillaVelas = crearElemento('input', { type: 'checkbox', name: 'Borrar también las velas' }) as HTMLInputElement;
+  const filaVelas = crearElemento('label', { class: 'campo-casilla', hidden: '' }, [casillaVelas, ' Borrar también las velas de esas operaciones']);
+  const notaVelas = crearElemento('p', { class: 'texto-suave', hidden: '' }, ['Si no marcas la casilla, las velas se conservan y, si reimportas esa misma cuenta, sus operaciones recuperan sus velas sin volver a cargar los ficheros. Ocupan espacio hasta que borres las velas.']);
   const campo = crearElemento('input', { type: 'text', name: 'confirmacion', autocomplete: 'off', placeholder: palabra }) as HTMLInputElement;
   const boton = crearElemento('button', { type: 'button', class: 'boton', disabled: '' }, ['Borrar definitivamente']) as HTMLButtonElement;
+  selector.addEventListener('change', () => {
+    const esCuenta = selector.value !== '' && selector.value !== VELAS;
+    filaVelas.hidden = !esCuenta;
+    notaVelas.hidden = !esCuenta;
+  });
   campo.addEventListener('input', () => {
     boton.disabled = campo.value.trim() !== palabra;
   });
@@ -92,7 +100,7 @@ export function crearTarjetaBorrar(resumen: ResumenDatos, palabra: string, alBor
     if (campo.value.trim() !== palabra) return;
     const elegida = resumen.cuentas.find((c) => claveCuenta(c.cuenta) === selector.value);
     if (selector.value === VELAS) alBorrar({ tipo: 'velas' });
-    else alBorrar(elegida ? { tipo: 'cuenta', cuenta: elegida.cuenta } : { tipo: 'todo' });
+    else alBorrar(elegida ? { tipo: 'cuenta', cuenta: elegida.cuenta, borrarVelas: casillaVelas.checked } : { tipo: 'todo' });
   });
   const exportar = crearElemento('button', { type: 'button', class: 'boton' }, ['Descargar copia antes de borrar']);
   exportar.addEventListener('click', alExportar);
@@ -100,9 +108,11 @@ export function crearTarjetaBorrar(resumen: ResumenDatos, palabra: string, alBor
   return crearElemento('section', { class: 'tarjeta' }, [
     crearElemento('h2', {}, ['Borrar datos']),
     crearElemento('p', { class: 'aviso aviso--atencion' }, ['Esto elimina los datos guardados en este navegador y no se puede deshacer. Si quieres conservarlos, descarga antes una copia de seguridad.']),
-    crearElemento('p', {}, ['Al borrar todo se eliminan operaciones, importaciones, velas (incluidos los ficheros de velas cargados) y brokers. «Solo las velas» borra únicamente las velas. Al borrar una cuenta se conservan las demás y los ficheros de velas cargados (no pertenecen a un broker). Los ajustes de pantalla (como «Mostrar horas en») se mantienen.']),
+    crearElemento('p', {}, ['Al borrar todo se eliminan operaciones, importaciones, velas (incluidos los ficheros de velas cargados) y brokers. «Solo las velas» borra únicamente las velas. Al borrar una cuenta se conservan las demás y, salvo que marques la casilla, también las velas (los ficheros de velas no pertenecen a un broker). Los ajustes de pantalla (como «Mostrar horas en») se mantienen.']),
     exportar,
     crearElemento('label', { class: 'campo campo--filtro' }, ['Qué borrar', selector]),
+    filaVelas,
+    notaVelas,
     crearElemento('label', { class: 'campo campo--filtro' }, [`Escribe ${palabra} para confirmar`, campo]),
     boton,
   ]);
