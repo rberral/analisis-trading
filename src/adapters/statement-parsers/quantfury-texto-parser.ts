@@ -10,6 +10,9 @@ import { ErrorDeUsuario } from '../../core/errores';
 import type { InformeParseado } from '../../models/informe';
 import type { OperacionInforme } from '../../models/operacion';
 import type { ParserInforme } from '../../services/importacion/puertos';
+import { leerEstadoEfectivo } from './quantfury-efectivo-parser';
+import { leerEstadoTrading } from './quantfury-trading-parser';
+import { CLASE_SIMBOLO, TEXTO_TIPO_INFORME, horaIso, importeDe, marcaDeHora, numeroDe, pegarSimbolos, sumar, tipoInformeQuantfury } from './quantfury-comun';
 
 type Accion = 'abrir' | 'añadir' | 'reducir' | 'cerrar';
 
@@ -26,42 +29,11 @@ interface FilaPosicion {
   readonly resultado: { readonly importe: number; readonly moneda: string } | null;
 }
 
-const SIMBOLOS_MONEDA: Readonly<Record<string, string>> = { $: 'USD', '€': 'EUR', '¥': 'JPY', '£': 'GBP', '₮': 'USDT' };
-const CLASE_SIMBOLO = '[$€¥£₮]';
 const TOLERANCIA_TOTAL = 0.011;
 const FILA = new RegExp(
   '^(\\S+)\\s+(\\d{2})/(\\d{2})/(\\d{4})\\s+(\\d{1,2}):(\\d{2}):(\\d{2})\\s+(AM|PM)\\s+UTC\\s+(COMPRAR|VENDER)\\s+\\((abrir|añadir|reducir|cerrar)\\)\\s+(.+)$',
 );
 const TOTAL = new RegExp(`^Total\\s+([+-]?\\s*${CLASE_SIMBOLO}?\\s*[\\d,]+\\.\\d+)\\s*$`);
-
-function importeDe(texto: string): { importe: number; moneda: string } {
-  const limpio = texto.replace(/\s+/g, '');
-  const simbolo = new RegExp(CLASE_SIMBOLO).exec(limpio)?.[0] ?? '';
-  const moneda = SIMBOLOS_MONEDA[simbolo];
-  if (moneda === undefined) throw new ErrorDeUsuario(`Moneda no reconocida en «${texto}». Quantfury usa $, €, ¥ o ₮ en los informes.`);
-  const numero = Number(limpio.replace(new RegExp(CLASE_SIMBOLO), '').replace(/[+,]/g, ''));
-  if (!Number.isFinite(numero)) throw new ErrorDeUsuario(`No se entiende el importe «${texto}».`);
-  return { importe: numero, moneda };
-}
-
-function numeroDe(texto: string): number {
-  const numero = Number(texto.replace(new RegExp(CLASE_SIMBOLO, 'g'), '').replace(/,/g, ''));
-  if (!Number.isFinite(numero)) throw new ErrorDeUsuario(`No se entiende el número «${texto}».`);
-  return numero;
-}
-
-/** El PDF separa a veces el símbolo de la moneda del número («- $ 7.70»): se pega para tratarlo como un solo trozo. */
-function pegarSimbolos(texto: string): string {
-  return texto
-    .replace(new RegExp(`([+-])\\s+(?=${CLASE_SIMBOLO})`, 'g'), '$1')
-    .replace(new RegExp(`(${CLASE_SIMBOLO})\\s+(?=\\d)`, 'g'), '$1');
-}
-
-function horaIso(dia: string, mes: string, anio: string, hora: string, minuto: string, segundo: string, ampm: string): string {
-  const base = Number(hora) % 12;
-  const hora24 = ampm === 'PM' ? base + 12 : base;
-  return `${anio}-${mes}-${dia}T${String(hora24).padStart(2, '0')}:${minuto}:${segundo}`;
-}
 
 /** Interpreta una línea como fila de posición, o devuelve null si es otra cosa (títulos, pies de página…). */
 function leerFila(linea: string): FilaPosicion | null {
@@ -86,15 +58,10 @@ function leerFila(linea: string): FilaPosicion | null {
   };
 }
 
-const sumar = (valores: readonly number[]): number => valores.reduce((suma, valor) => suma + valor, 0);
-
 function precioMedio(filas: readonly FilaPosicion[]): number {
   const cantidad = sumar(filas.map((fila) => fila.cantidad));
   return cantidad > 0 ? sumar(filas.map((fila) => fila.precio * fila.cantidad)) / cantidad : (filas[0]?.precio ?? 0);
 }
-
-/** "2026-06-26T13:33:33" -> "20260626133333": sirve de identificador, porque Quantfury no numera las posiciones. */
-const marcaDeHora = (hora: string): string => hora.replace(/[-:T]/g, '');
 
 function crearOperacion(filas: readonly FilaPosicion[], total: { importe: number; moneda: string } | null, cerrada: boolean, ticket: string): OperacionInforme {
   const primera = filas[0]!;
@@ -211,8 +178,13 @@ export function leerInformeQuantfury(texto: string): InformeParseado {
   };
 }
 
+/** Quantfury entrega tres PDF distintos: según el título se lee uno u otro. */
 export class ParserQuantfury implements ParserInforme {
   leer(contenido: string): InformeParseado {
+    const tipo = tipoInformeQuantfury(contenido);
+    if (tipo === null) throw new ErrorDeUsuario(`El PDF no es ninguno de los informes de Quantfury admitidos: ${Object.values(TEXTO_TIPO_INFORME).join(', ')}.`);
+    if (tipo === 'efectivo') return leerEstadoEfectivo(contenido);
+    if (tipo === 'trading') return leerEstadoTrading(contenido);
     return leerInformeQuantfury(contenido);
   }
 }

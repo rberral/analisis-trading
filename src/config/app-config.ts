@@ -61,6 +61,15 @@ export const SECCIONES: readonly Seccion[] = [
   },
 ];
 
+/** Un fichero que la plataforma entrega por separado. `clave` es el tipo de informe que debe ser. */
+export interface FicheroPlataforma {
+  readonly clave: string;
+  readonly etiqueta: string;
+  readonly obligatorio: boolean;
+  /** Cómo descargarlo desde la plataforma. */
+  readonly instrucciones: string;
+}
+
 export interface OpcionPlataforma {
   readonly valor: Plataforma;
   readonly nombre: string;
@@ -70,6 +79,8 @@ export interface OpcionPlataforma {
   readonly horarioFijo?: HorarioBroker;
   /** Explicación que se muestra al elegir la plataforma. */
   readonly nota?: string;
+  /** Si la plataforma reparte los datos en varios ficheros, uno por entrada (el primero se importa antes). */
+  readonly ficheros?: readonly FicheroPlataforma[];
 }
 
 /** Plataformas de las que se puede importar un informe. Para añadir otra: un parser y una entrada aquí. */
@@ -80,7 +91,27 @@ export const PLATAFORMAS: readonly OpcionPlataforma[] = [
     nombre: 'Quantfury (informe PDF)',
     tipoFichero: 'pdf',
     horarioFijo: { tipo: 'zona', zona: 'UTC' },
-    nota: 'El informe de Quantfury da las horas en UTC y mezcla monedas (USD, EUR, USDT…). Indica la moneda de la cuenta: los resultados en otras monedas se convierten con el cambio del día de cierre del Banco Central Europeo (USDT cuenta como USD) y se guarda también el importe original. Cada posición (apertura, ampliaciones y cierre) se importa como una operación.',
+    nota: 'Quantfury da las horas en UTC y mezcla monedas (USD, EUR, USDT…): los resultados en otras monedas se convierten con el cambio del día de cierre del Banco Central Europeo (USDT cuenta como USD) y se guarda también el importe original. Cada posición (apertura, ampliaciones y cierre) se importa como una operación. Quantfury no guarda stop loss ni take profit, así que las operaciones se marcan como cierre manual, salvo las de resultado casi nulo (break even), que solo se detectan si se conoce el saldo. Para conocer el saldo hacen falta los tres ficheros: sin los dos opcionales, no hay saldo ni break even. Los estados de cuenta van siempre en dólares, así que la cuenta debe ser en USD.',
+    ficheros: [
+      {
+        clave: 'historial',
+        etiqueta: 'Historial de trading (obligatorio)',
+        obligatorio: true,
+        instrucciones: 'Entra en Cuenta → Historial de Trading → Posiciones Cerradas. A continuación selecciona «Ver todas las operaciones» y «Descargar el informe del historial de trading».',
+      },
+      {
+        clave: 'efectivo',
+        etiqueta: 'Estado de la cuenta en efectivo (opcional)',
+        obligatorio: false,
+        instrucciones: 'Entra en Cuenta → Cuenta en efectivo → «Descargar estado de la cuenta en efectivo». Trae cada ingreso y retirada con su fecha y hora.',
+      },
+      {
+        clave: 'trading',
+        etiqueta: 'Estado de la cuenta de trading (opcional)',
+        obligatorio: false,
+        instrucciones: 'Entra en Cuenta → Cuenta en efectivo → «Descargar estado de la cuenta en trading». Trae dividendos, recompensas, el saldo actual y las ganancias no realizadas.',
+      },
+    ],
   },
 ];
 
@@ -196,6 +227,15 @@ export const COLORES_GRAFICO = {
  */
 export const CLASIFICACION_CIERRE = {
   umbralBreakEvenPorcentaje: 0.1,
+} as const;
+
+/** Saldo de la cuenta que se muestra en el Panel cuando el broker da el suyo para compararlo. */
+export const SALDO_CUENTA = {
+  /**
+   * Diferencia máxima (en la moneda de la cuenta) para decir que el saldo calculado cuadra con el del broker.
+   * Los cambios del BCE no son exactamente los de Quantfury, así que hay unos dólares de margen.
+   */
+  toleranciaCuadre: 5,
 } as const;
 
 export interface OpcionHorario {

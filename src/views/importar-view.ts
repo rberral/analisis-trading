@@ -10,7 +10,12 @@ import { crearCampoHorario, type DatosHorario } from './horario-campo-view';
 
 export interface DatosFormularioImportacion extends DatosHorario {
   readonly plataforma: Plataforma;
+  /** El fichero de las plataformas que entregan uno solo. */
   readonly fichero: File | null;
+  /** Por tipo de informe, en las plataformas que entregan varios (Quantfury). */
+  readonly ficheros: Readonly<Record<string, File | null>>;
+  /** Texto escrito por el usuario; vacío si no lo indica. Solo informativo. */
+  readonly apalancamiento: string;
   readonly broker: string;
   readonly cuenta: string;
   readonly moneda: string;
@@ -19,8 +24,8 @@ export interface DatosFormularioImportacion extends DatosHorario {
 export interface VistaImportar {
   readonly elemento: HTMLElement;
   mostrarCargando(): void;
-  /** `sinVelas`: operaciones cerradas de la cuenta que aún no tienen velas guardadas. */
-  mostrarResultado(resultado: ResultadoImportacion, sinVelas: readonly OperacionesSinVelas[]): void;
+  /** Un resultado por fichero importado. `sinVelas`: operaciones cerradas de la cuenta que aún no tienen velas guardadas. */
+  mostrarResultado(resultados: readonly ResultadoImportacion[], sinVelas: readonly OperacionesSinVelas[]): void;
   mostrarError(mensaje: string): void;
   /** Pide un cambio fijo por moneda cuando no se han podido obtener los cambios automáticos. */
   pedirCambios(mensaje: string, monedas: readonly string[], destino: string, alConfirmar: (cambios: Readonly<Record<string, string>>) => void): void;
@@ -95,12 +100,70 @@ function crearResumenValidacion(resultado: ResultadoImportacion): HTMLElement {
   return crearElemento('p', { class: hayDiferencias ? 'aviso aviso--atencion' : 'aviso' }, [texto]);
 }
 
+function crearAvisos(resultado: ResultadoImportacion): HTMLElement[] {
+  if (resultado.avisos.length === 0) return [];
+  return [
+    crearElemento('div', { class: 'aviso aviso--atencion' }, [
+      crearElemento('strong', {}, ['Avisos']),
+      crearElemento('ul', {}, resultado.avisos.map((aviso) => crearElemento('li', {}, [aviso]))),
+    ]),
+  ];
+}
+
+/** Un informe solo de movimientos (efectivo o trading de Quantfury) no tiene operaciones ni totales que comprobar. */
+const soloMovimientos = (resultado: ResultadoImportacion): boolean =>
+  resultado.nuevas + resultado.cerradasDesdeAbierta + resultado.yaExistentes + resultado.abiertas === 0;
+
+function crearTarjetaResultado(resultado: ResultadoImportacion, primero: boolean): HTMLElement {
+  const cabecera = crearElemento('h2', {}, [primero ? '2 · Resultado de la importación' : 'Fichero adicional']);
+  const datosCuenta = crearElemento('p', { class: 'texto-suave' }, [`${resultado.nombreFichero} · ${resultado.broker} · ${resultado.cuenta} · ${resultado.moneda}`]);
+  const apalancamiento = resultado.apalancamiento === null ? [] : [crearElemento('p', { class: 'texto-suave' }, [`Apalancamiento indicado: ${resultado.apalancamiento}:1 (solo informativo).`])];
+  if (soloMovimientos(resultado)) {
+    return crearElemento('div', { class: 'tarjeta' }, [
+      cabecera,
+      datosCuenta,
+      crearElemento('div', { class: 'cifras' }, [crearTarjetaCifra(resultado.movimientos, 'ingresos, retiradas, dividendos y recompensas')]),
+      ...(resultado.traeResumenCuenta ? [crearElemento('p', { class: 'texto-suave' }, ['Se ha guardado el saldo de la cuenta y las ganancias no realizadas (solo informativas): se ven en el Panel.'])] : []),
+      ...apalancamiento,
+      ...crearAvisos(resultado),
+    ]);
+  }
+  return crearElemento('div', { class: 'tarjeta' }, [
+    cabecera,
+    datosCuenta,
+    crearElemento('div', { class: 'cifras' }, [
+      crearTarjetaCifra(resultado.nuevas, 'operaciones nuevas'),
+      crearTarjetaCifra(resultado.cerradasDesdeAbierta, 'abiertas que ya se han cerrado'),
+      crearTarjetaCifra(resultado.yaExistentes, 'ya existentes'),
+      crearTarjetaCifra(resultado.abiertas, 'abiertas ahora (se guarda su SL y TP)'),
+      crearTarjetaCifra(resultado.movimientos, 'ingresos, retiradas y dividendos'),
+    ]),
+    ...apalancamiento,
+    crearElemento('h3', {}, ['Comprobación de totales contra el informe']),
+    crearResumenValidacion(resultado),
+    crearTablaComprobaciones(resultado.comprobaciones),
+    ...crearAvisos(resultado),
+  ]);
+}
+
 export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   const selectorPlataforma = crearControl<HTMLSelectElement>('select', { name: 'plataforma' });
   for (const plataforma of opciones.plataformas) {
     selectorPlataforma.append(crearElemento('option', { value: plataforma.valor }, [plataforma.nombre]));
   }
   const campoFichero = crearControl<HTMLInputElement>('input', { type: 'file', name: 'fichero', accept: '.htm,.html' });
+  // Plataformas con varios ficheros: un campo por fichero, con sus instrucciones de descarga.
+  const camposFicheros = new Map<string, HTMLInputElement>();
+  const zonaFicheros = crearElemento('div', { class: 'formulario', hidden: '' });
+  for (const plataforma of opciones.plataformas) {
+    for (const fichero of plataforma.ficheros ?? []) {
+      if (camposFicheros.has(fichero.clave)) continue;
+      const control = crearControl<HTMLInputElement>('input', { type: 'file', name: `fichero-${fichero.clave}`, accept: '.pdf' });
+      camposFicheros.set(fichero.clave, control);
+      zonaFicheros.append(campo(fichero.etiqueta, control), crearElemento('p', { class: 'texto-suave' }, [fichero.instrucciones]));
+    }
+  }
+  const campoApalancamiento = crearControl<HTMLInputElement>('input', { type: 'text', name: 'apalancamiento', inputmode: 'decimal', placeholder: 'Por ejemplo 5 (5:1)' });
   const campoBrokerCuenta = crearCampoBrokerCuenta();
   const campoHorario = crearCampoHorario(opciones.horarios);
   const notaPlataforma = crearElemento('p', { class: 'texto-suave', hidden: '' });
@@ -108,12 +171,21 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   const ajustarPlataforma = () => {
     const plataforma = opciones.plataformas.find((opcion) => opcion.valor === selectorPlataforma.value);
     campoFichero.accept = plataforma?.tipoFichero === 'pdf' ? '.pdf' : '.htm,.html';
+    const variosFicheros = plataforma?.ficheros !== undefined;
+    campoFichero.closest('label')!.hidden = variosFicheros;
+    zonaFicheros.hidden = !variosFicheros;
+    // Cada campo solo se ve si la plataforma elegida lo pide.
+    for (const [clave, control] of camposFicheros) {
+      const visible = plataforma?.ficheros?.some((fichero) => fichero.clave === clave) ?? false;
+      control.closest('label')!.hidden = !visible;
+      const instrucciones = control.closest('label')!.nextElementSibling as HTMLElement | null;
+      if (instrucciones) instrucciones.hidden = !visible;
+    }
     campoHorario.elemento.hidden = plataforma?.horarioFijo !== undefined;
     notaPlataforma.hidden = plataforma?.nota === undefined;
     notaPlataforma.replaceChildren(plataforma?.nota ?? '');
   };
   selectorPlataforma.addEventListener('change', ajustarPlataforma);
-  ajustarPlataforma();
 
   const botonEnviar = crearControl<HTMLButtonElement>('button', { type: 'submit', class: 'boton' });
   botonEnviar.append('Importar y validar');
@@ -123,11 +195,16 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     campo('Plataforma', selectorPlataforma),
     notaPlataforma,
     campo('Fichero del informe', campoFichero),
+    zonaFicheros,
     campoBrokerCuenta.elemento,
+    campo('Apalancamiento de la cuenta (opcional, solo informativo)', campoApalancamiento),
     campoHorario.elemento,
     crearElemento('p', { class: 'texto-suave' }, ['El fichero no se guarda: se lee, se importa y se descarta.']),
     botonEnviar,
   ]);
+
+  // Los campos ya están dentro de su etiqueta: ahora se puede mostrar u ocultar cada uno.
+  ajustarPlataforma();
 
   const zonaResultado = crearElemento('section', { class: 'resultado', 'aria-live': 'polite' });
 
@@ -141,6 +218,8 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     opciones.alEnviar({
       plataforma: selectorPlataforma.value as Plataforma,
       fichero: campoFichero.files?.[0] ?? null,
+      ficheros: Object.fromEntries([...camposFicheros].map(([clave, control]) => [clave, control.files?.[0] ?? null])),
+      apalancamiento: campoApalancamiento.value,
       ...campoBrokerCuenta.leer(),
       ...campoHorario.leer(),
     });
@@ -179,7 +258,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
       botonEnviar.disabled = false;
       zonaResultado.replaceChildren(crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [mensaje]));
     },
-    mostrarResultado(resultado, sinVelas) {
+    mostrarResultado(resultados, sinVelas) {
       botonEnviar.disabled = false;
       const avisoVelas = sinVelas.length
         ? [
@@ -193,32 +272,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
             ]),
           ]
         : [];
-      const avisos = resultado.avisos.length
-        ? [
-            crearElemento('div', { class: 'aviso aviso--atencion' }, [
-              crearElemento('strong', {}, ['Avisos']),
-              crearElemento('ul', {}, resultado.avisos.map((aviso) => crearElemento('li', {}, [aviso]))),
-            ]),
-          ]
-        : [];
-      zonaResultado.replaceChildren(
-        crearElemento('div', { class: 'tarjeta' }, [
-          crearElemento('h2', {}, ['2 · Resultado de la importación']),
-          crearElemento('p', { class: 'texto-suave' }, [`${resultado.nombreFichero} · ${resultado.broker} · ${resultado.cuenta} · ${resultado.moneda}`]),
-          crearElemento('div', { class: 'cifras' }, [
-            crearTarjetaCifra(resultado.nuevas, 'operaciones nuevas'),
-            crearTarjetaCifra(resultado.cerradasDesdeAbierta, 'abiertas que ya se han cerrado'),
-            crearTarjetaCifra(resultado.yaExistentes, 'ya existentes'),
-            crearTarjetaCifra(resultado.abiertas, 'abiertas ahora (se guarda su SL y TP)'),
-            crearTarjetaCifra(resultado.movimientos, 'ingresos, retiradas y dividendos'),
-          ]),
-          crearElemento('h3', {}, ['Comprobación de totales contra el informe']),
-          crearResumenValidacion(resultado),
-          crearTablaComprobaciones(resultado.comprobaciones),
-          ...avisos,
-          ...avisoVelas,
-        ]),
-      );
+      zonaResultado.replaceChildren(...resultados.map((resultado, indice) => crearTarjetaResultado(resultado, indice === 0)), ...avisoVelas);
     },
   };
   return vista;

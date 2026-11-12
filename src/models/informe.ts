@@ -45,6 +45,10 @@ export interface InformeParseado {
   readonly totales: TotalesInforme;
   /** true si el informe incluye el bloque de detalles (el «detallado»). */
   readonly tieneBloqueDetalle: boolean;
+  /** Cifras de la cuenta en la fecha del informe (estado de trading de Quantfury); hora del broker. */
+  readonly resumenCuenta?: { readonly horaBroker: string; readonly patrimonio: number; readonly noRealizadas: number };
+  /** Si el informe solo vale para cuentas en esta moneda (el estado de Quantfury va siempre en USD). */
+  readonly monedaObligatoria?: string;
   /** Observaciones del lector (por ejemplo, una posición cuya suma no coincide con su total). */
   readonly avisos?: readonly string[];
 }

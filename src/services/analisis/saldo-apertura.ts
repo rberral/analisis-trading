@@ -1,9 +1,12 @@
 /**
  * Saldo de la cuenta en el momento de abrir una operación: ingresos/retiradas hechos hasta
  * entonces más el resultado neto de las operaciones ya cerradas.
+ * Si de la cuenta no se conoce ningún ingreso (Quantfury sin sus estados de cuenta) el saldo no se puede
+ * saber y se devuelve 0, que quienes lo usan (break even) tratan como «desconocido».
  */
 import { claveCuenta, type CuentaTrading } from '../../models/cuenta';
 import type { OperacionGuardada } from '../../models/operacion';
+import { movimientosVigentes } from './movimientos-vigentes';
 import { netoDeOperacion } from '../estadisticas/calculadora-estadisticas';
 import type { DatosGuardados } from '../consultas/puertos';
 
@@ -21,7 +24,9 @@ export function crearCalculadorSaldo(datos: DatosGuardados): CalculadorSaldo {
     porCuenta.set(clave, [...(porCuenta.get(clave) ?? []), evento]);
   };
 
-  for (const m of datos.movimientos) anadir(m, { utcMs: m.utcMs, importe: m.importe });
+  const movimientos = movimientosVigentes(datos.movimientos);
+  const cuentasConIngresos = new Set(movimientos.map(claveCuenta));
+  for (const m of movimientos) anadir(m, { utcMs: m.utcMs, importe: m.importe });
   for (const o of datos.operaciones) {
     if (o.cierreUtc !== null) anadir(o, { utcMs: o.cierreUtc, importe: netoOperacion(o) });
   }
@@ -35,7 +40,7 @@ export function crearCalculadorSaldo(datos: DatosGuardados): CalculadorSaldo {
   }
 
   return (cuenta, utcMs) => {
-    const serie = acumulados.get(claveCuenta(cuenta));
+    const serie = cuentasConIngresos.has(claveCuenta(cuenta)) ? acumulados.get(claveCuenta(cuenta)) : undefined;
     if (!serie) return 0;
     let bajo = 0;
     let alto = serie.tiempos.length; // primer índice con tiempo > utcMs

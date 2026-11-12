@@ -1,4 +1,6 @@
-import { HORARIOS_PREDEFINIDOS, PLATAFORMAS } from '../config/app-config';
+import { HORARIOS_PREDEFINIDOS, PLATAFORMAS, type FicheroPlataforma, type OpcionPlataforma } from '../config/app-config';
+import { TEXTO_TIPO_INFORME, tipoInformeQuantfury } from '../adapters/statement-parsers/quantfury-comun';
+import type { ResultadoImportacion } from '../services/importacion/importacion-service';
 import { extraerTextoPdf } from '../adapters/pdf/lector-pdf';
 import { ErrorDeUsuario } from '../core/errores';
 import { logger } from '../core/logger';
@@ -20,13 +22,36 @@ export function crearPaginaImportar(aplicacion: Aplicacion): HTMLElement {
   });
 
   // El texto de un PDF tarda en extraerse: si hay que reintentar con otros cambios, no se vuelve a leer.
-  let leido: { readonly fichero: File; readonly contenido: string } | null = null;
+  const leidos = new Map<File, string>();
 
   async function leerFichero(fichero: File, tipo: 'html' | 'pdf'): Promise<string> {
-    if (leido?.fichero === fichero) return leido.contenido;
+    const guardado = leidos.get(fichero);
+    if (guardado !== undefined) return guardado;
     const contenido = tipo === 'pdf' ? await extraerTextoPdf(fichero) : await fichero.text();
-    leido = { fichero, contenido };
+    leidos.set(fichero, contenido);
     return contenido;
+  }
+
+  /** Cada hueco de fichero debe recibir el informe que le toca (no el de efectivo en el de trading, por ejemplo). */
+  function comprobarTipo(contenido: string, ficheroEsperado: FicheroPlataforma): void {
+    const tipo = tipoInformeQuantfury(contenido);
+    if (tipo === ficheroEsperado.clave) return;
+    const encontrado = tipo === null ? 'no es ninguno de los informes de Quantfury' : `es ${TEXTO_TIPO_INFORME[tipo]}`;
+    throw new ErrorDeUsuario(`El fichero de «${ficheroEsperado.etiqueta}» ${encontrado}. Ponlo en el campo que le corresponde.`);
+  }
+
+  /** Ficheros que hay que importar, en orden: uno solo, o los que el usuario ha elegido de la plataforma. */
+  function ficherosAImportar(datos: DatosFormularioImportacion, plataforma: OpcionPlataforma | undefined): Array<{ fichero: File; esperado: FicheroPlataforma | null }> {
+    if (!plataforma?.ficheros) {
+      if (!datos.fichero) throw new ErrorDeUsuario('Elige el fichero del informe.');
+      return [{ fichero: datos.fichero, esperado: null }];
+    }
+    const faltante = plataforma.ficheros.find((f) => f.obligatorio && !datos.ficheros[f.clave]);
+    if (faltante) throw new ErrorDeUsuario(`Falta el fichero obligatorio: ${faltante.etiqueta.replace(' (obligatorio)', '')}.`);
+    return plataforma.ficheros.flatMap((esperado) => {
+      const fichero = datos.ficheros[esperado.clave];
+      return fichero ? [{ fichero, esperado }] : [];
+    });
   }
 
   function leerCambios(texto: Readonly<Record<string, string>>): Record<string, number> {
@@ -41,24 +66,41 @@ export function crearPaginaImportar(aplicacion: Aplicacion): HTMLElement {
 
   async function importar(datos: DatosFormularioImportacion, cambiosManuales?: Readonly<Record<string, number>>): Promise<void> {
     try {
-      if (!datos.fichero) throw new ErrorDeUsuario('Elige el fichero del informe.');
       const plataforma = PLATAFORMAS.find((opcion) => opcion.valor === datos.plataforma);
+      const aImportar = ficherosAImportar(datos, plataforma);
       const horario = plataforma?.horarioFijo ?? construirHorario(datos);
+      const apalancamiento = datos.apalancamiento.trim() === '' ? null : leerTasa(datos.apalancamiento);
+      if (datos.apalancamiento.trim() !== '' && apalancamiento === null) {
+        throw new ErrorDeUsuario('El apalancamiento debe ser un número mayor que cero (por ejemplo 5 si es 5:1), o dejarse vacío.');
+      }
       vista.mostrarCargando();
-      const contenido = await leerFichero(datos.fichero, plataforma?.tipoFichero ?? 'html');
-      const resultado = await servicio.importar(contenido, {
-        plataforma: datos.plataforma,
-        nombreFichero: datos.fichero.name,
-        broker: datos.broker,
-        cuenta: datos.cuenta,
-        moneda: datos.moneda,
-        horario,
-        ...(cambiosManuales ? { cambiosManuales } : {}),
-      });
+      // Primero se lee y se comprueba todo; solo entonces se importa, para no dejar a medias una carga con un fichero equivocado.
+      const contenidos: string[] = [];
+      for (const { fichero, esperado } of aImportar) {
+        const contenido = await leerFichero(fichero, plataforma?.tipoFichero ?? 'html');
+        if (esperado) comprobarTipo(contenido, esperado);
+        contenidos.push(contenido);
+      }
+      const resultados: ResultadoImportacion[] = [];
+      for (const [indice, { fichero }] of aImportar.entries()) {
+        resultados.push(
+          await servicio.importar(contenidos[indice]!, {
+            plataforma: datos.plataforma,
+            nombreFichero: fichero.name,
+            broker: datos.broker,
+            cuenta: datos.cuenta,
+            moneda: datos.moneda,
+            horario,
+            apalancamiento,
+            ...(cambiosManuales ? { cambiosManuales } : {}),
+          }),
+        );
+      }
+      const resultado = resultados[0]!;
       // Las operaciones recién importadas no tienen velas hasta que se vuelva a cargar el fichero de velas.
       const [guardados, ventanas] = await Promise.all([aplicacion.lectorDatos.leerTodo(), aplicacion.lectorVentanas.leerVentanas()]);
       const deLaCuenta = guardados.operaciones.filter((o) => o.broker === resultado.broker && o.cuenta === resultado.cuenta);
-      vista.mostrarResultado(resultado, operacionesSinVelas(deLaCuenta, ventanas));
+      vista.mostrarResultado(resultados, operacionesSinVelas(deLaCuenta, ventanas));
     } catch (error) {
       if (error instanceof ErrorCambioNecesario) {
         vista.pedirCambios(error.message, error.monedas, error.destino, (texto) => {

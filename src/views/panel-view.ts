@@ -2,6 +2,8 @@ import type { AnalisisPeriodo, PuntoBalance } from '../services/consultas/analis
 import { crearElemento, crearSvg } from './dom';
 import type { PerfilEstrategia } from '../services/analisis/perfil-estrategia';
 import { crearTarjetaPerfil } from './perfil-view';
+import type { ResumenSaldo } from '../services/analisis/resumen-saldo';
+import { crearTarjetaSaldo } from './saldo-view';
 import { entero, fechaHoraUtc, importe, porcentaje } from './formato';
 
 function cifra(texto: string, valor: string, clase = ''): HTMLElement {
@@ -45,7 +47,7 @@ function crearCurva(curva: readonly PuntoBalance[], balanceInicial: number): HTM
   ]);
 }
 
-export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEstrategia | null, moneda: string): HTMLElement {
+export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEstrategia | null, moneda: string, saldo: ResumenSaldo | null): HTMLElement {
   const e = analisis.estadisticas;
   if (e.totalOperaciones === 0) {
     return crearElemento('p', { class: 'aviso' }, ['No hay operaciones cerradas con este filtro.']);
@@ -73,6 +75,7 @@ export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEst
         `Balance de partida del periodo: ${importe(analisis.balanceInicial)}. El drawdown se calcula dentro del periodo elegido.`,
       ]),
     ]),
+    ...(saldo ? [crearTarjetaSaldo(saldo, moneda, e.beneficioNeto)] : []),
     crearElemento('div', { class: 'tarjeta' }, [crearElemento('h2', {}, ['Curva de balance']), crearCurva(analisis.curva, analisis.balanceInicial)]),
     ...(perfil ? [crearTarjetaPerfil(perfil)] : []),
   ]);

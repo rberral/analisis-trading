@@ -1,4 +1,4 @@
-import { ESTRATEGIA, TEMPORALIDADES, UMBRALES_ERRORES } from '../config/app-config';
+import { ESTRATEGIA, SALDO_CUENTA, TEMPORALIDADES, UMBRALES_ERRORES } from '../config/app-config';
 import type { Aplicacion } from '../composicion';
 import { logger } from '../core/logger';
 import { analizarPeriodo, opcionesDelFiltro, type AnalisisPeriodo } from '../services/consultas/analisis-periodo';
@@ -7,6 +7,7 @@ import { convertir, leerTasa, type TipoCambio } from '../services/cambio/servici
 import { crearConversor } from '../views/conversor-view';
 import type { DatosGuardados } from '../services/consultas/puertos';
 import type { VentanaVelas } from '../models/velas';
+import { resumirSaldo, type ResumenSaldo } from '../services/analisis/resumen-saldo';
 import { crearPerfil } from '../services/analisis/perfil-estrategia';
 import { duracionDeTemporalidad, indexarVentanas } from '../services/analisis/ventanas-operacion';
 import { detectarErrores } from '../services/errores/detector-errores';
@@ -22,7 +23,7 @@ import { crearContenidoPanel } from '../views/panel-view';
 /** Una ventana de velas por operación (la más detallada); vacío si no se han cargado velas. */
 type VentanasPorOperacion = ReadonlyMap<string, VentanaVelas>;
 
-type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion, horas: VisualizadorHoras, moneda: string) => HTMLElement;
+type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion, horas: VisualizadorHoras, moneda: string, saldo: ResumenSaldo | null) => HTMLElement;
 
 /**
  * Pantalla con barra de filtros arriba y contenido que depende del filtro.
@@ -44,7 +45,7 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
     zonaContenido.replaceChildren(
       typeof resultado === 'string'
         ? crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [resultado])
-        : dibujar(resultado, ventanas, horas, moneda),
+        : dibujar(resultado, ventanas, horas, moneda, filtro.cuenta === null ? null : resumirSaldo(datos, filtro.cuenta, SALDO_CUENTA.toleranciaCuadre)),
     );
   }
 
@@ -85,8 +86,8 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
 const duracionDeVentana = (ventana: VentanaVelas): number => duracionDeTemporalidad(ventana.temporalidad, TEMPORALIDADES);
 
 export const crearPaginaPanel = (aplicacion: Aplicacion): HTMLElement =>
-  crearPaginaFiltrada(aplicacion, 'Panel', (analisis, ventanas, _horas, moneda) =>
-    crearContenidoPanel(analisis, crearPerfil(analisis.operaciones, ventanas, duracionDeVentana, ESTRATEGIA), moneda),
+  crearPaginaFiltrada(aplicacion, 'Panel', (analisis, ventanas, _horas, moneda, saldo) =>
+    crearContenidoPanel(analisis, crearPerfil(analisis.operaciones, ventanas, duracionDeVentana, ESTRATEGIA), moneda, saldo),
   );
 
 export const crearPaginaOperaciones = (aplicacion: Aplicacion): HTMLElement =>

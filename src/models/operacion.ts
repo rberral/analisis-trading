@@ -48,7 +48,20 @@ export interface MovimientoInforme {
   readonly horaBroker: HoraBroker;
   readonly descripcion: string;
   readonly importe: number;
+  /** De dónde sale el movimiento; sin indicar es un ingreso/retirada normal (MetaTrader). */
+  readonly clase?: ClaseMovimiento;
+  /** Moneda en que el informe da el importe, si no es la de la cuenta (se convierte al importar). */
+  readonly monedaOrigen?: string;
 }
+
+/**
+ * Quantfury reparte los movimientos entre dos informes: el de efectivo trae cada traspaso con su hora
+ * y el de trading solo los totales del año. Con esta etiqueta se evita contar dos veces lo mismo.
+ *  - traspaso: ingreso o retirada con su hora exacta.
+ *  - anual: ingresos menos retiradas de un año entero, sin hora (se usa solo si ese año no tiene traspasos).
+ *  - dividendo y recompensa: dinero que suma a la cuenta de trading.
+ */
+export type ClaseMovimiento = 'traspaso' | 'anual' | 'dividendo' | 'recompensa';
 
 /** Operación guardada en la base de datos del navegador. */
 export interface OperacionGuardada extends OperacionInforme {

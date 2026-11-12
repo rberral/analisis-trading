@@ -5,6 +5,7 @@
 import { CLASIFICACION_CIERRE } from '../../config/app-config';
 import { mismaCuenta, type CuentaTrading } from '../../models/cuenta';
 import type { ClasificacionCierre, Filtro } from '../../models/filtro';
+import { movimientosVigentes } from '../analisis/movimientos-vigentes';
 import { crearClasificador } from '../analisis/clasificacion-cierre';
 import type { EstadisticasOperaciones } from '../../models/estadisticas';
 import type { MovimientoGuardado } from '../../models/importacion';
@@ -84,7 +85,7 @@ export function analizarPeriodo(datos: DatosGuardados, filtro: Filtro): Analisis
 
   const deLaCuenta = (cuenta: CuentaTrading) => filtro.cuenta === null || mismaCuenta(cuenta, filtro.cuenta);
   const operacionesCuenta = datos.operaciones.filter((o) => deLaCuenta(o));
-  const movimientos = datos.movimientos.filter((m) => deLaCuenta(m));
+  const movimientos = movimientosVigentes(datos.movimientos).filter((m) => deLaCuenta(m));
   const deLActivo = (o: OperacionGuardada) => filtro.activo === null || o.activo === filtro.activo;
 
   // El saldo al abrir se calcula con todo lo guardado, no solo con lo filtrado.

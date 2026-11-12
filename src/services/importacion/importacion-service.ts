@@ -14,7 +14,7 @@ import type {
 } from '../../models/importacion';
 import type { OperacionGuardada, OperacionInforme } from '../../models/operacion';
 import { calcularEstadisticas } from '../estadisticas/calculadora-estadisticas';
-import { convertirOperaciones, type ProveedorTasasHistoricas } from './conversion-moneda';
+import { convertirMovimientos, convertirOperaciones, type ProveedorTasasHistoricas } from './conversion-moneda';
 import type { ParserInforme, RepositorioOperaciones } from './puertos';
 import { calcularBalanceInicial, validarTotales, type Comprobacion } from './validador-totales';
 
@@ -30,6 +30,8 @@ export interface OpcionesImportacion {
   readonly horario: HorarioBroker;
   /** Solo si el informe mezcla monedas: cambio fijo por moneda (unidades de la moneda de la cuenta por cada una). */
   readonly cambiosManuales?: Readonly<Record<string, number>>;
+  /** Apalancamiento de la cuenta, solo para mostrarlo: ningún cálculo lo usa. */
+  readonly apalancamiento?: number | null;
 }
 
 export interface ResultadoImportacion {
@@ -48,6 +50,9 @@ export interface ResultadoImportacion {
   readonly avisos: readonly string[];
   /** Operaciones cuyo resultado se ha convertido a la moneda de la cuenta. */
   readonly convertidas: number;
+  readonly apalancamiento: number | null;
+  /** true si el informe trae el saldo de la cuenta en su fecha (estado de trading de Quantfury). */
+  readonly traeResumenCuenta: boolean;
 }
 
 /** Cómo se parecen entre sí las monedas del informe y las que admite el proveedor de cambios. */
@@ -74,9 +79,13 @@ export class ServicioImportacion {
     const errorHorario = validarHorario(opciones.horario);
     if (errorHorario) throw new ErrorDeUsuario(errorHorario);
 
+    const apalancamiento = opciones.apalancamiento ?? null;
+    if (apalancamiento !== null && !(Number.isFinite(apalancamiento) && apalancamiento > 0)) {
+      throw new ErrorDeUsuario('El apalancamiento debe ser un número mayor que cero (por ejemplo 5 si es 5:1), o dejarse vacío.');
+    }
     const informe = this.parsers[opciones.plataforma].leer(contenido);
-    if (informe.cerradas.length === 0 && informe.abiertas.length === 0) {
-      throw new ErrorDeUsuario('El informe no contiene ninguna operación.');
+    if (informe.cerradas.length === 0 && informe.abiertas.length === 0 && informe.movimientos.length === 0 && !informe.resumenCuenta) {
+      throw new ErrorDeUsuario('El informe no contiene ninguna operación ni movimiento.');
     }
 
     const importacionId = crypto.randomUUID();
@@ -94,36 +103,53 @@ export class ServicioImportacion {
     if (!/^[A-Z]{3}$/.test(moneda)) {
       throw new ErrorDeUsuario('Indica la moneda de la cuenta con 3 letras (por ejemplo USD o EUR): el informe no la trae.');
     }
+    if (informe.monedaObligatoria !== undefined && moneda !== informe.monedaObligatoria) {
+      throw new ErrorDeUsuario(`Este informe de Quantfury está en ${informe.monedaObligatoria}: la cuenta debe ser en ${informe.monedaObligatoria}, no en ${moneda}.`);
+    }
     const monedaGuardada = await this.repositorio.monedaDeCuenta(broker, cuenta);
     if (monedaGuardada !== null && monedaGuardada !== '' && monedaGuardada !== moneda) {
       throw new ErrorDeUsuario(`La cuenta ${broker} · ${cuenta} ya está guardada en ${monedaGuardada} y este informe es en ${moneda}. Revisa el nombre de la cuenta o la moneda.`);
     }
     const propietaria = { broker, cuenta, moneda };
-    const convertido = await convertirOperaciones([...informe.cerradas, ...informe.abiertas], {
+    const parametrosCambio = {
       monedaCuenta: moneda,
       equivalencias: this.conversion.equivalencias,
       cambiosManuales: opciones.cambiosManuales ?? {},
       proveedor: this.conversion.proveedor,
-    });
+    };
+    const convertido = await convertirOperaciones([...informe.cerradas, ...informe.abiertas], parametrosCambio);
     if (convertido.convertidas > 0) {
       avisos.push(
         `${convertido.convertidas} operaciones en ${convertido.monedasConvertidas.join(', ')} se han convertido a ${moneda}; se guarda también el importe original. Las cifras de la tabla de comprobación se comparan con los importes originales, sin convertir.`,
       );
     }
+    const conversionMovimientos = await convertirMovimientos(informe.movimientos, parametrosCambio);
+    if (conversionMovimientos.convertidos > 0) {
+      avisos.push(`${conversionMovimientos.convertidos} movimientos en otra moneda (dividendos) se han convertido a ${moneda} con el cambio del día; se guarda también el importe original.`);
+    }
     avisos.push(...(informe.avisos ?? []));
     const operaciones = convertido.operaciones.map((operacion) => aOperacionGuardada(operacion, propietaria, importacionId, aUtc));
-    const movimientos: MovimientoGuardado[] = informe.movimientos.map((movimiento) => ({
-      id: `${broker}:${cuenta}:${movimiento.ticket}`,
-      broker,
-      cuenta,
-      moneda,
-      ticket: movimiento.ticket,
-      descripcion: movimiento.descripcion,
-      importe: movimiento.importe,
-      horaBroker: movimiento.horaBroker,
-      utcMs: aUtc(movimiento.horaBroker, `movimiento ${movimiento.ticket}`),
-      importacionId,
-    }));
+    const movimientos: MovimientoGuardado[] = conversionMovimientos.movimientos.map((movimiento, indice) => {
+      const original = informe.movimientos[indice]!;
+      const convertido = movimiento.importe !== original.importe;
+      return {
+        id: `${broker}:${cuenta}:${movimiento.ticket}`,
+        broker,
+        cuenta,
+        moneda,
+        ticket: movimiento.ticket,
+        descripcion: movimiento.descripcion,
+        importe: movimiento.importe,
+        horaBroker: movimiento.horaBroker,
+        utcMs: aUtc(movimiento.horaBroker, `movimiento ${movimiento.ticket}`),
+        importacionId,
+        ...(movimiento.clase ? { clase: movimiento.clase } : {}),
+        ...(convertido && movimiento.monedaOrigen ? { importeOrigen: original.importe, monedaOrigen: movimiento.monedaOrigen } : {}),
+      };
+    });
+    const resumenCuenta = informe.resumenCuenta
+      ? { fechaUtcMs: aUtc(informe.resumenCuenta.horaBroker, 'fecha del estado de la cuenta'), patrimonio: informe.resumenCuenta.patrimonio, noRealizadas: informe.resumenCuenta.noRealizadas }
+      : null;
 
     const estados = await this.repositorio.estadoDeOperaciones(operaciones.map((operacion) => operacion.id));
     let nuevas = 0;
@@ -159,6 +185,8 @@ export class ServicioImportacion {
       yaExistentes,
       abiertas: informe.abiertas.length,
       validacionCorrecta: comprobaciones.every((comprobacion) => comprobacion.estado !== 'diferencia'),
+      ...(apalancamiento !== null ? { apalancamiento } : {}),
+      ...(resumenCuenta ? { resumenCuenta } : {}),
     };
     const instantaneas = operaciones
       .filter((operacion) => operacion.cierreUtc === null)
@@ -191,11 +219,15 @@ export class ServicioImportacion {
       comprobaciones,
       avisos,
       convertidas: convertido.convertidas,
+      apalancamiento,
+      traeResumenCuenta: resumenCuenta !== null,
     };
   }
 }
 
 function comprobarTotales(informe: InformeParseado): Comprobacion[] {
+  // Un informe de solo movimientos (efectivo o trading de Quantfury) no tiene operaciones que comprobar.
+  if (informe.cerradas.length === 0 && informe.abiertas.length === 0) return [];
   const estadisticas = calcularEstadisticas(
     informe.cerradas.map((operacion) => ({ ...operacion, cierre: operacion.cierreBroker ?? '' })),
     calcularBalanceInicial(informe),
