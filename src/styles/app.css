@@ -35,6 +35,17 @@ body {
   border-right: 1px solid var(--borde);
 }
 
+/* En pantallas anchas el menú queda fijo (no se desplaza con el contenido); en estrechas va arriba y se desplaza con la página. */
+@media (min-width: 800px) {
+  .menu {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
 .menu__marca {
   padding: 4px 12px 20px;
   font-size: 17px;
