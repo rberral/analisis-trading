@@ -3,6 +3,8 @@ import type { Plataforma } from '../models/importacion';
 import type { ResultadoImportacion } from '../services/importacion/importacion-service';
 import type { Comprobacion } from '../services/importacion/validador-totales';
 import { crearElemento } from './dom';
+import { crearCampoBrokerCuenta } from './broker-cuenta-campo-view';
+import type { CuentaConMoneda } from '../services/consultas/cuentas';
 import { crearCampoHorario, type DatosHorario } from './horario-campo-view';
 
 export interface DatosFormularioImportacion extends DatosHorario {
@@ -18,8 +20,8 @@ export interface VistaImportar {
   mostrarCargando(): void;
   mostrarResultado(resultado: ResultadoImportacion): void;
   mostrarError(mensaje: string): void;
-  /** Brokers y cuentas ya guardados, como sugerencias al escribir. */
-  sugerir(brokers: readonly string[], cuentas: readonly string[]): void;
+  /** Cuentas ya guardadas, para poder elegirlas en los desplegables. */
+  cargarCuentas(cuentas: readonly CuentaConMoneda[]): void;
 }
 
 interface OpcionesVista {
@@ -95,11 +97,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     selectorPlataforma.append(crearElemento('option', { value: plataforma.valor }, [plataforma.nombre]));
   }
   const campoFichero = crearControl<HTMLInputElement>('input', { type: 'file', name: 'fichero', accept: '.htm,.html' });
-  const campoBroker = crearControl<HTMLInputElement>('input', { type: 'text', name: 'broker', placeholder: 'Por ejemplo: IC Markets', list: 'sugerencias-brokers', required: '', maxlength: '60' });
-  const campoCuenta = crearControl<HTMLInputElement>('input', { type: 'text', name: 'cuenta', placeholder: 'Por defecto, el número de cuenta del informe', list: 'sugerencias-cuentas', maxlength: '60' });
-  const campoMoneda = crearControl<HTMLInputElement>('input', { type: 'text', name: 'moneda', placeholder: 'Por defecto, la del informe (por ejemplo USD)', maxlength: '3' });
-  const listaBrokers = crearElemento('datalist', { id: 'sugerencias-brokers' });
-  const listaCuentas = crearElemento('datalist', { id: 'sugerencias-cuentas' });
+  const campoBrokerCuenta = crearCampoBrokerCuenta();
   const campoHorario = crearCampoHorario(opciones.horarios);
 
   const botonEnviar = crearControl<HTMLButtonElement>('button', { type: 'submit', class: 'boton' });
@@ -109,16 +107,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     crearElemento('h2', {}, ['1 · Datos del fichero']),
     campo('Plataforma', selectorPlataforma),
     campo('Fichero del informe', campoFichero),
-    crearElemento('h3', {}, ['Broker y cuenta']),
-    crearElemento('p', { class: 'aviso' }, [
-      'Broker + cuenta identifican de dónde vienen tus datos, y cada combinación se analiza por separado (Panel, Operaciones, Errores y Exportar). Es importante porque cada cuenta puede usar una estrategia distinta: mezclarlas falsearía las estadísticas, el saldo, el drawdown, el break even y la detección de errores. Usa siempre exactamente el mismo broker y cuenta cuando importes informes nuevos de la misma cuenta; si cambias el nombre, se guardará como otra cuenta distinta.',
-    ]),
-    campo('Broker (obligatorio)', campoBroker),
-    campo('Cuenta (opcional)', campoCuenta),
-    campo('Moneda de la cuenta (opcional)', campoMoneda),
-    crearElemento('p', { class: 'texto-suave' }, ['Los informes de MetaTrader traen la moneda (USD, EUR…) y se usa sola; solo escríbela si el informe no la incluye. Todos los importes de la cuenta están en esa moneda.']),
-    listaBrokers,
-    listaCuentas,
+    campoBrokerCuenta.elemento,
     campoHorario.elemento,
     crearElemento('p', { class: 'texto-suave' }, ['El fichero no se guarda: se lee, se importa y se descarta.']),
     botonEnviar,
@@ -128,12 +117,15 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
 
   formulario.addEventListener('submit', (evento) => {
     evento.preventDefault();
+    const errorBroker = campoBrokerCuenta.validar();
+    if (errorBroker) {
+      vista.mostrarError(errorBroker);
+      return;
+    }
     opciones.alEnviar({
       plataforma: selectorPlataforma.value as Plataforma,
       fichero: campoFichero.files?.[0] ?? null,
-      broker: campoBroker.value,
-      cuenta: campoCuenta.value,
-      moneda: campoMoneda.value,
+      ...campoBrokerCuenta.leer(),
       ...campoHorario.leer(),
     });
   });
@@ -143,12 +135,9 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     crearElemento('div', { class: 'dos-columnas' }, [formulario, zonaResultado]),
   ]);
 
-  return {
+  const vista: VistaImportar = {
     elemento,
-    sugerir(brokers, cuentas) {
-      listaBrokers.replaceChildren(...brokers.map((b) => crearElemento('option', { value: b })));
-      listaCuentas.replaceChildren(...cuentas.map((c) => crearElemento('option', { value: c })));
-    },
+    cargarCuentas: (cuentas) => campoBrokerCuenta.cargar(cuentas),
     mostrarCargando() {
       botonEnviar.disabled = true;
       zonaResultado.replaceChildren(crearElemento('p', { class: 'texto-suave' }, ['Importando…']));
@@ -186,4 +175,5 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
       );
     },
   };
+  return vista;
 }

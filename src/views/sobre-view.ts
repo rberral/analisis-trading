@@ -12,7 +12,7 @@ const PASOS: readonly Paso[] = [
     titulo: 'Importar operaciones',
     ruta: '/importar',
     texto:
-      'Empieza aquí. Carga el informe «Detailed Statement» de MetaTrader 4 (fichero HTML) e indica el broker, la cuenta y el horario del servidor del broker. Broker + cuenta identifican de dónde vienen los datos y cada combinación se analiza por separado, porque puede usar una estrategia distinta. El horario es obligatorio, porque las horas del informe se convierten a UTC con él. Antes de guardar, la aplicación comprueba que sus cifras coinciden con los totales del propio informe. Puedes importar informes nuevos cuando quieras: las operaciones que ya estaban se actualizan, no se duplican.',
+      'Empieza aquí. Carga el informe «Detailed Statement» de MetaTrader 4 (fichero HTML) y elige el broker y la cuenta (uno ya guardado o uno nuevo) y el horario del servidor del broker. Broker + cuenta identifican de dónde vienen los datos y cada combinación se analiza por separado, porque puede usar una estrategia distinta. El horario es obligatorio, porque las horas del informe se convierten a UTC con él. Antes de guardar, la aplicación comprueba que sus cifras coinciden con los totales del propio informe. Puedes importar informes nuevos cuando quieras: las operaciones que ya estaban se actualizan, no se duplican.',
   },
   {
     titulo: 'Velas y ficheros (opcional)',
@@ -53,7 +53,7 @@ const CONCEPTOS: ReadonlyArray<readonly [string, string]> = [
   ['Horas', 'Todo se guarda en UTC. «Mostrar horas en» (menú lateral) cambia solo cómo se ven: UTC, hora del broker u hora de España. Los periodos de los filtros se cuentan en UTC.'],
   ['Tipo de cierre', 'Se clasifica por el resultado, no por la etiqueta de MetaTrader: Break even si el resultado neto es menor del 0,1 % del saldo al abrir; si no, Manual si lo cerraste tú, y Take profit o Stop loss según ganes o pierdas. El porcentaje está en la configuración.'],
   ['Moneda', 'Cada cuenta tiene su moneda (USD, EUR…), que se toma del informe, y todos sus importes están en ella. En Panel, Operaciones y Errores hay un conversor orientativo a euros: el cambio se puede escribir a mano o consultar (botón «Actualizar (BCE)», que solo envía una petición a una API pública cuando lo pulsas). No cambia tus datos.'],
-  ['Cuenta de trading', 'Panel, Operaciones, Errores y Exportar trabajan siempre con una sola cuenta (broker + cuenta), la que eliges arriba, para no mezclar estrategias ni saldos. Usa siempre el mismo broker y cuenta al importar informes nuevos de la misma cuenta.'],
+  ['Cuenta de trading', 'Panel, Operaciones, Errores y Exportar trabajan siempre con una sola cuenta (broker + cuenta), la que eliges arriba, para no mezclar estrategias ni saldos. Al importar informes nuevos de una cuenta que ya tienes, elígela en los desplegables (su moneda debe coincidir).'],
   ['Filtros', 'Cuenta, periodo, activo y cierre. Se mantienen al cambiar entre Panel, Operaciones, Errores y Exportar.'],
   ['Tus datos', 'No hay servidor ni cuenta: todo se guarda en este navegador y no sale de él. Si borras los datos del sitio, se pierden; por eso conviene la copia de seguridad.'],
 ];

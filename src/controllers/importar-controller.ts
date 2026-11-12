@@ -40,12 +40,11 @@ export function crearPaginaImportar(aplicacion: Aplicacion): HTMLElement {
     }
   }
 
-  // Sugerencias con lo ya guardado: ayudan a escribir siempre igual el broker y la cuenta.
+  // Brokers y cuentas ya guardados, para elegirlos en los desplegables.
   aplicacion.lectorDatos
     .leerTodo()
     .then((datos) => {
-      const cuentas = listarCuentas(datos);
-      vista.sugerir([...new Set(cuentas.map((c) => c.broker))], [...new Set(cuentas.map((c) => c.cuenta))]);
+      vista.cargarCuentas(listarCuentas(datos));
     })
     .catch((error: unknown) => logger.error('No se pudieron leer las cuentas guardadas', error));
 
