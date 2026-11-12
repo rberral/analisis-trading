@@ -83,7 +83,7 @@ export const TOLERANCIAS = {
 } as const;
 
 export const APP_CONFIG = {
-  nombreApp: 'Diario de trading',
+  nombreApp: 'Análisis Trading',
   /** Nivel mínimo de los mensajes de registro: debug, info, warn o error. */
   nivelLog: 'info',
   textos: {
@@ -253,7 +253,7 @@ export const COPIA_SEGURIDAD = {
   formato: 'diario-trading-copia',
   /** Sube si cambia la estructura del fichero; una copia de una versión mayor no se acepta. */
   version: 1,
-  prefijoFichero: 'diario-trading_copia',
+  prefijoFichero: 'analisis-trading_copia',
   /** Palabra que hay que escribir para confirmar que se borran los datos. */
   palabraConfirmacion: 'BORRAR',
 } as const;

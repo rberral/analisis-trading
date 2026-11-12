@@ -68,7 +68,7 @@ export function crearPaginaSobre(): HTMLElement {
     crearElemento('h1', { class: 'titulo-pagina' }, ['Sobre la aplicación']),
     crearElemento('section', { class: 'tarjeta' }, [
       crearElemento('p', {}, [
-        'Diario de trading analiza tu historial de operaciones: importa el informe de tu plataforma, calcula estadísticas, detecta errores habituales y dibuja tus operaciones en TradingView. Funciona entera en tu navegador, sin servidor ni cuenta.',
+        'Análisis Trading analiza tu historial de operaciones: importa el informe de tu plataforma, calcula estadísticas, detecta errores habituales y dibuja tus operaciones en TradingView. Funciona entera en tu navegador, sin servidor ni cuenta.',
       ]),
     ]),
     crearElemento('section', { class: 'tarjeta' }, [

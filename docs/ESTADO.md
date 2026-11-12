@@ -3,7 +3,7 @@
 Última actualización: 2026-11-12
 
 ## Qué es
-Diario de trading: web estática (TypeScript + Vite, sin framework; Dexie, Lightweight Charts, Vitest) publicada en GitHub Pages. Sin roles ni permisos. Los datos viven en el navegador (IndexedDB) de cada usuario. Los ficheros subidos no se guardan.
+Análisis Trading: web estática (TypeScript + Vite, sin framework; Dexie, Lightweight Charts, Vitest) publicada en GitHub Pages. Sin roles ni permisos. Los datos viven en el navegador (IndexedDB) de cada usuario. Los ficheros subidos no se guardan.
 
 ## Decisiones tomadas
 - Todas las horas se guardan en UTC. El horario del servidor del broker lo elige el usuario al subir cada fichero (zona con nombre o regla «Nueva York + N horas»); no se deduce nada ni hay valor por defecto.

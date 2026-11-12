@@ -5,12 +5,12 @@
  * Todo el dibujo ocurre en barstate.islast; el límite de Pine es 500 cajas/líneas/etiquetas por script.
  */
 export const PLANTILLA_PINE = String.raw`//@version=6
-// Generado por «Diario de trading» desde un Detailed Statement de MetaTrader 4
+// Generado por «Análisis Trading» desde un Detailed Statement de MetaTrader 4
 // Activo: @@SIMBOLO@@ (@@ACTIVO@@) | Operaciones: @@TOTAL@@ | @@PARTE@@
 // Filtros aplicados en la aplicación: @@FILTROS@@
 // Las marcas de tiempo son UTC absolutas: TradingView las coloca bien en cualquier zona horaria del gráfico.
 // Los textos de los tooltips usan: @@ETIQUETA_HORA@@.
-indicator("Diario · @@SIMBOLO@@ · @@PARTE_CORTA@@", overlay = true, max_boxes_count = 500, max_lines_count = 500, max_labels_count = 500)
+indicator("Análisis · @@SIMBOLO@@ · @@PARTE_CORTA@@", overlay = true, max_boxes_count = 500, max_lines_count = 500, max_labels_count = 500)
 
 // ===== CONSTANTES =====
 MAX_OPERACIONES = @@MAX_OPERACIONES@@ // 2 cajas por operación y 500 cajas como máximo en Pine
@@ -170,7 +170,7 @@ dibujarTabla(table tabla, string simbolo, int cerradas, int ganadoras, int perde
     sinBE = ganadoras + perdedoras
     porcentajeGanadoras = sinBE > 0 ? ganadoras * 100.0 / sinBE : 0.0
     colorNeto = netoTotal >= 0 ? color.lime : color.red
-    table.cell(tabla, 0, 0, "Diario de trading · " + simbolo, text_color = color.white, text_halign = text.align_center)
+    table.cell(tabla, 0, 0, "Análisis Trading · " + simbolo, text_color = color.white, text_halign = text.align_center)
     table.cell(tabla, 0, 1, "Operaciones cerradas", text_color = color.white, text_halign = text.align_left)
     table.cell(tabla, 1, 1, str.tostring(cerradas), text_color = color.white, text_halign = text.align_right)
     table.cell(tabla, 0, 2, "Ganadoras", text_color = color.white, text_halign = text.align_left)
