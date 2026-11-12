@@ -22,7 +22,7 @@ import { crearContenidoPanel } from '../views/panel-view';
 /** Una ventana de velas por operación (la más detallada); vacío si no se han cargado velas. */
 type VentanasPorOperacion = ReadonlyMap<string, VentanaVelas>;
 
-type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion, horas: VisualizadorHoras) => HTMLElement;
+type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion, horas: VisualizadorHoras, moneda: string) => HTMLElement;
 
 /**
  * Pantalla con barra de filtros arriba y contenido que depende del filtro.
@@ -44,7 +44,7 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
     zonaContenido.replaceChildren(
       typeof resultado === 'string'
         ? crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [resultado])
-        : dibujar(resultado, ventanas, horas),
+        : dibujar(resultado, ventanas, horas, moneda),
     );
   }
 
@@ -85,8 +85,8 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
 const duracionDeVentana = (ventana: VentanaVelas): number => duracionDeTemporalidad(ventana.temporalidad, TEMPORALIDADES);
 
 export const crearPaginaPanel = (aplicacion: Aplicacion): HTMLElement =>
-  crearPaginaFiltrada(aplicacion, 'Panel', (analisis, ventanas) =>
-    crearContenidoPanel(analisis, crearPerfil(analisis.operaciones, ventanas, duracionDeVentana, ESTRATEGIA)),
+  crearPaginaFiltrada(aplicacion, 'Panel', (analisis, ventanas, _horas, moneda) =>
+    crearContenidoPanel(analisis, crearPerfil(analisis.operaciones, ventanas, duracionDeVentana, ESTRATEGIA), moneda),
   );
 
 export const crearPaginaOperaciones = (aplicacion: Aplicacion): HTMLElement =>

@@ -37,8 +37,10 @@ export function crearConversor(opciones: OpcionesConversor): HTMLElement {
 
   const mostrarEstado = (origen: string) => estado.replaceChildren(tasa === null ? 'Escribe el cambio o pulsa «Actualizar (BCE)» para consultarlo.' : `Cambio: ${origen}.`);
   const pintar = () => {
-    const importe = opciones.leerTasa(campoImporte.value.replace(/\./g, ''));
-    const esNegativo = campoImporte.value.trim().startsWith('-');
+    // El importe se escribe como «-44.516,40»: se separa el signo y se quitan los puntos de millar.
+    const texto = campoImporte.value.trim();
+    const esNegativo = texto.startsWith('-');
+    const importe = opciones.leerTasa(texto.replace(/^[-−]/, '').replace(/\./g, ''));
     const valor = importe === null ? null : (esNegativo ? -importe : importe);
     resultado.replaceChildren(tasa === null || valor === null ? '—' : `${numero(2).format(opciones.convertir(valor, tasa))} ${destino}`);
   };

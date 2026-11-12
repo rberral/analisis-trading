@@ -45,7 +45,7 @@ function crearCurva(curva: readonly PuntoBalance[], balanceInicial: number): HTM
   ]);
 }
 
-export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEstrategia | null): HTMLElement {
+export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEstrategia | null, moneda: string): HTMLElement {
   const e = analisis.estadisticas;
   if (e.totalOperaciones === 0) {
     return crearElemento('p', { class: 'aviso' }, ['No hay operaciones cerradas con este filtro.']);
@@ -53,7 +53,7 @@ export function crearContenidoPanel(analisis: AnalisisPeriodo, perfil: PerfilEst
   const acierto = (e.ganadoras / e.totalOperaciones) * 100;
   return crearElemento('div', {}, [
     crearElemento('div', { class: 'tarjeta' }, [
-      crearElemento('h2', {}, ['Resumen']),
+      crearElemento('h2', {}, [moneda === '' ? 'Resumen' : `Resumen (${moneda})`]),
       crearElemento('div', { class: 'cifras' }, [
         cifra('resultado neto', importe(e.beneficioNeto), claseSigno(e.beneficioNeto)),
         cifra('operaciones', entero(e.totalOperaciones)),
