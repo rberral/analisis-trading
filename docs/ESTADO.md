@@ -30,6 +30,8 @@ Regla de Break Even cambiada a la del proyecto de TradingView: |neto| < 0,1 % de
 
 8. Copia de seguridad y borrado (12-nov): pantalla `/copia` (exportar JSON de todas las tablas, importar fusionando, borrar todo o una cuenta con confirmación escrita). Servicio `ServicioCopia` + adaptador `AlmacenDexie`; formato versionado en `COPIA_SEGURIDAD`. Pendiente de probar en navegador.
 
+9. Moneda y conversor a euros (12-nov): la moneda (del informe o indicada) se guarda con operaciones, movimientos e importaciones; no se mezclan monedas en una cuenta. Tarjeta con conversor orientativo a EUR en Panel/Operaciones/Errores; cambio manual o automático (Frankfurter/BCE, solo al pulsar), recordado en localStorage; CSP de producción permite solo ese origen. No se pudo probar la API desde el contenedor (sin red): verificar en el navegador.
+
 ## Pendiente (hoja de ruta)
 
 

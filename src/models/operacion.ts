@@ -45,6 +45,8 @@ export interface OperacionGuardada extends OperacionInforme {
   readonly id: string;
   readonly broker: string;
   readonly cuenta: string;
+  /** Moneda de la cuenta (USD, EUR…): en ella están todos los importes. Vacía en datos anteriores. */
+  readonly moneda: string;
   readonly aperturaUtc: number;
   /** null si sigue abierta. */
   readonly cierreUtc: number | null;

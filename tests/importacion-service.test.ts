@@ -10,6 +10,11 @@ import { INFORME_MT4_EJEMPLO } from './fixtures/informe-mt4';
 class RepositorioEnMemoria implements RepositorioOperaciones {
   readonly operaciones = new Map<string, OperacionGuardada>();
   importaciones = 0;
+  readonly monedas = new Map<string, string>();
+
+  async monedaDeCuenta(broker: string, cuenta: string) {
+    return this.monedas.get(`${broker}:${cuenta}`) ?? null;
+  }
 
   async estadoDeOperaciones(ids: readonly string[]) {
     const estados = new Map<string, 'abierta' | 'cerrada'>();
@@ -23,6 +28,7 @@ class RepositorioEnMemoria implements RepositorioOperaciones {
   async guardarImportacion(datos: DatosAGuardar) {
     for (const operacion of datos.operaciones) this.operaciones.set(operacion.id, operacion);
     this.importaciones += 1;
+    this.monedas.set(`${datos.importacion.broker}:${datos.importacion.cuenta}`, datos.importacion.moneda);
   }
 }
 
@@ -31,6 +37,7 @@ const OPCIONES: OpcionesImportacion = {
   nombreFichero: 'informe.htm',
   broker: 'IC Markets',
   cuenta: '',
+  moneda: '',
   horario: { tipo: 'zona', zona: 'Europe/Athens' },
 };
 
@@ -93,6 +100,16 @@ describe('ServicioImportacion', () => {
     expect(r.cuenta).toBe('Scalping');
     expect(r.nuevas).toBe(5); // otra cuenta: no se confunde con la anterior
     expect(repositorio.operaciones.get('IC Markets:Scalping:1001')?.cuenta).toBe('Scalping');
+  });
+
+  it('guarda la moneda del informe (o la indicada) y no deja mezclar monedas en una cuenta', async () => {
+    const { servicio, repositorio } = crear();
+    const r = await servicio.importar(INFORME_MT4_EJEMPLO, OPCIONES);
+    expect(r.moneda).toBe('USD');
+    expect(repositorio.operaciones.get('IC Markets:1000001:1001')?.moneda).toBe('USD');
+    await expect(servicio.importar(INFORME_MT4_EJEMPLO, { ...OPCIONES, moneda: 'eur' })).rejects.toThrow(ErrorDeUsuario);
+    await expect(servicio.importar(INFORME_MT4_EJEMPLO, { ...OPCIONES, cuenta: 'Otra', moneda: 'EU' })).rejects.toThrow(ErrorDeUsuario);
+    expect((await servicio.importar(INFORME_MT4_EJEMPLO, { ...OPCIONES, cuenta: 'Otra', moneda: 'eur' })).moneda).toBe('EUR');
   });
 
   it('rechaza un horario inválido antes de leer nada', async () => {

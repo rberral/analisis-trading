@@ -52,6 +52,7 @@ const PASOS: readonly Paso[] = [
 const CONCEPTOS: ReadonlyArray<readonly [string, string]> = [
   ['Horas', 'Todo se guarda en UTC. «Mostrar horas en» (menú lateral) cambia solo cómo se ven: UTC, hora del broker u hora de España. Los periodos de los filtros se cuentan en UTC.'],
   ['Tipo de cierre', 'Se clasifica por el resultado, no por la etiqueta de MetaTrader: Break even si el resultado neto es menor del 0,1 % del saldo al abrir; si no, Manual si lo cerraste tú, y Take profit o Stop loss según ganes o pierdas. El porcentaje está en la configuración.'],
+  ['Moneda', 'Cada cuenta tiene su moneda (USD, EUR…), que se toma del informe, y todos sus importes están en ella. En Panel, Operaciones y Errores hay un conversor orientativo a euros: el cambio se puede escribir a mano o consultar (botón «Actualizar (BCE)», que solo envía una petición a una API pública cuando lo pulsas). No cambia tus datos.'],
   ['Cuenta de trading', 'Panel, Operaciones, Errores y Exportar trabajan siempre con una sola cuenta (broker + cuenta), la que eliges arriba, para no mezclar estrategias ni saldos. Usa siempre el mismo broker y cuenta al importar informes nuevos de la misma cuenta.'],
   ['Filtros', 'Cuenta, periodo, activo y cierre. Se mantienen al cambiar entre Panel, Operaciones, Errores y Exportar.'],
   ['Tus datos', 'No hay servidor ni cuenta: todo se guarda en este navegador y no sale de él. Si borras los datos del sitio, se pierden; por eso conviene la copia de seguridad.'],

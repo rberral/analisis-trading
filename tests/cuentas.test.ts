@@ -10,7 +10,7 @@ const datos = { operaciones: [b, a], movimientos: [] };
 
 describe('listarCuentas', () => {
   it('lista cada broker + cuenta una vez, ordenadas', () => {
-    expect(listarCuentas(datos)).toEqual([{ broker: 'A', cuenta: '1' }, { broker: 'B', cuenta: '1' }]);
+    expect(listarCuentas(datos)).toEqual([{ broker: 'A', cuenta: '1', moneda: 'USD' }, { broker: 'B', cuenta: '1', moneda: 'USD' }]);
   });
 });
 
@@ -18,8 +18,8 @@ describe('asegurarCuenta', () => {
   const cuentas = listarCuentas(datos);
 
   it('elige la primera si no hay cuenta o ya no existe', () => {
-    expect(asegurarCuenta(FILTRO_INICIAL, cuentas).cuenta).toEqual({ broker: 'A', cuenta: '1' });
-    expect(asegurarCuenta({ ...FILTRO_INICIAL, cuenta: { broker: 'Z', cuenta: '9' } }, cuentas).cuenta).toEqual({ broker: 'A', cuenta: '1' });
+    expect(asegurarCuenta(FILTRO_INICIAL, cuentas).cuenta).toEqual({ broker: 'A', cuenta: '1', moneda: 'USD' });
+    expect(asegurarCuenta({ ...FILTRO_INICIAL, cuenta: { broker: 'Z', cuenta: '9' } }, cuentas).cuenta).toEqual({ broker: 'A', cuenta: '1', moneda: 'USD' });
   });
 
   it('respeta una cuenta válida', () => {

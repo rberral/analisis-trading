@@ -16,6 +16,16 @@ export class RepositorioOperacionesDexie implements RepositorioOperaciones {
     return estados;
   }
 
+  async monedaDeCuenta(broker: string, cuenta: string): Promise<string | null> {
+    const importacion = await this.baseDeDatos
+      .table<RegistroImportacion, string>('importaciones')
+      .where('broker')
+      .equals(broker)
+      .filter((registro) => registro.cuenta === cuenta)
+      .first();
+    return importacion ? importacion.moneda ?? '' : null;
+  }
+
   async guardarImportacion(datos: DatosAGuardar): Promise<void> {
     const db = this.baseDeDatos;
     const operaciones = db.table<OperacionGuardada, string>('operaciones');

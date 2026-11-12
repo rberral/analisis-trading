@@ -70,6 +70,10 @@ Para probar la versión de producción (con la política de seguridad activa) en
 
 Todas las horas se guardan en **UTC**: al importar un informe o cargar velas se convierten con el horario del servidor del broker que eliges. En el menú lateral, **Mostrar horas en** permite verlas en UTC (por defecto), en hora del broker (como en MetaTrader) o en hora de España; solo cambia la visualización y la elección se recuerda en el navegador. Los periodos de los filtros siempre se cuentan en UTC.
 
+## Moneda y conversor a euros
+
+Cada cuenta guarda su moneda (USD, EUR…), que se toma del informe de MetaTrader o se indica al importar si el informe no la trae; no se pueden mezclar monedas en una misma cuenta. En Panel, Operaciones y Errores aparece una tarjeta con la moneda de la cuenta y un **conversor a euros** orientativo (por defecto, el resultado neto del filtro). El cambio se puede **escribir a mano** o consultar con «Actualizar (BCE)», que pide el cambio del día a la API pública gratuita de Frankfurter (datos del Banco Central Europeo) solo cuando pulsas el botón; el cambio se recuerda en el navegador. La URL está en `CAMBIO_MONEDAS` (configuración) y la política de seguridad de la versión publicada permite únicamente esa conexión. Los datos guardados no se convierten.
+
 ## Copia de seguridad y borrado
 
 **Copia de seguridad** exporta todos los datos (operaciones, movimientos, importaciones, velas y brokers) a un fichero JSON (`analisis-trading_copia_AAAA-MM-DD.json`) y los importa de nuevo. Al importar se **fusiona** con lo que ya hay: no se borra nada, las filas con el mismo id se actualizan y una operación ya cerrada no vuelve a abierta. Cada exportación genera un fichero nuevo (el navegador no puede sobrescribir un fichero del disco por su cuenta). La misma pantalla permite **borrar** todos los datos o solo los de una cuenta (broker + cuenta), escribiendo `BORRAR` para confirmar; los ficheros de velas cargados y los ajustes de pantalla se conservan al borrar una cuenta.

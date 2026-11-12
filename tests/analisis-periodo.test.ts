@@ -5,7 +5,7 @@ import { analizarPeriodo, opcionesDelFiltro, type AnalisisPeriodo } from '../src
 import { crearOperacion } from './fixtures/operaciones';
 
 const deposito: MovimientoGuardado = {
-  id: 'B:1:1', broker: 'B', cuenta: '1', ticket: '1', descripcion: 'Depósito', importe: 1000,
+  id: 'B:1:1', broker: 'B', cuenta: '1', moneda: 'USD', ticket: '1', descripcion: 'Depósito', importe: 1000,
   horaBroker: '2025-12-31T00:00:00', utcMs: Date.UTC(2025, 11, 31), importacionId: 'imp',
 };
 

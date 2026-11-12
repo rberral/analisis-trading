@@ -10,6 +10,7 @@ export interface DatosFormularioImportacion extends DatosHorario {
   readonly fichero: File | null;
   readonly broker: string;
   readonly cuenta: string;
+  readonly moneda: string;
 }
 
 export interface VistaImportar {
@@ -96,6 +97,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   const campoFichero = crearControl<HTMLInputElement>('input', { type: 'file', name: 'fichero', accept: '.htm,.html' });
   const campoBroker = crearControl<HTMLInputElement>('input', { type: 'text', name: 'broker', placeholder: 'Por ejemplo: IC Markets', list: 'sugerencias-brokers', required: '', maxlength: '60' });
   const campoCuenta = crearControl<HTMLInputElement>('input', { type: 'text', name: 'cuenta', placeholder: 'Por defecto, el número de cuenta del informe', list: 'sugerencias-cuentas', maxlength: '60' });
+  const campoMoneda = crearControl<HTMLInputElement>('input', { type: 'text', name: 'moneda', placeholder: 'Por defecto, la del informe (por ejemplo USD)', maxlength: '3' });
   const listaBrokers = crearElemento('datalist', { id: 'sugerencias-brokers' });
   const listaCuentas = crearElemento('datalist', { id: 'sugerencias-cuentas' });
   const campoHorario = crearCampoHorario(opciones.horarios);
@@ -113,6 +115,8 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     ]),
     campo('Broker (obligatorio)', campoBroker),
     campo('Cuenta (opcional)', campoCuenta),
+    campo('Moneda de la cuenta (opcional)', campoMoneda),
+    crearElemento('p', { class: 'texto-suave' }, ['Los informes de MetaTrader traen la moneda (USD, EUR…) y se usa sola; solo escríbela si el informe no la incluye. Todos los importes de la cuenta están en esa moneda.']),
     listaBrokers,
     listaCuentas,
     campoHorario.elemento,
@@ -129,6 +133,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
       fichero: campoFichero.files?.[0] ?? null,
       broker: campoBroker.value,
       cuenta: campoCuenta.value,
+      moneda: campoMoneda.value,
       ...campoHorario.leer(),
     });
   });
@@ -165,7 +170,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
       zonaResultado.replaceChildren(
         crearElemento('div', { class: 'tarjeta' }, [
           crearElemento('h2', {}, ['2 · Resultado de la importación']),
-          crearElemento('p', { class: 'texto-suave' }, [`${resultado.nombreFichero} · ${resultado.broker} · ${resultado.cuenta}`]),
+          crearElemento('p', { class: 'texto-suave' }, [`${resultado.nombreFichero} · ${resultado.broker} · ${resultado.cuenta} · ${resultado.moneda}`]),
           crearElemento('div', { class: 'cifras' }, [
             crearTarjetaCifra(resultado.nuevas, 'operaciones nuevas'),
             crearTarjetaCifra(resultado.cerradasDesdeAbierta, 'abiertas que ya se han cerrado'),

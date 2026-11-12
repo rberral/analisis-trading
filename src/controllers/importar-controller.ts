@@ -26,6 +26,7 @@ export function crearPaginaImportar(aplicacion: Aplicacion): HTMLElement {
         nombreFichero: datos.fichero.name,
         broker: datos.broker,
         cuenta: datos.cuenta,
+        moneda: datos.moneda,
         horario,
       });
       vista.mostrarResultado(resultado);

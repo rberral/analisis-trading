@@ -24,12 +24,15 @@ export interface OpcionesImportacion {
   readonly broker: string;
   /** Nombre de la cuenta; si va vacío se usa el número de cuenta del informe. */
   readonly cuenta: string;
+  /** Moneda de la cuenta; si va vacía se usa la que trae el informe. */
+  readonly moneda: string;
   readonly horario: HorarioBroker;
 }
 
 export interface ResultadoImportacion {
   readonly broker: string;
   readonly cuenta: string;
+  readonly moneda: string;
   readonly nombreFichero: string;
   readonly nuevas: number;
   /** Operaciones que estaban abiertas en una importación anterior y ahora figuran cerradas. */
@@ -75,7 +78,15 @@ export class ServicioImportacion {
     };
 
     const cuenta = opciones.cuenta.trim() || informe.cuenta;
-    const propietaria = { broker, cuenta };
+    const moneda = (opciones.moneda.trim() || informe.moneda).toUpperCase();
+    if (!/^[A-Z]{3}$/.test(moneda)) {
+      throw new ErrorDeUsuario('Indica la moneda de la cuenta con 3 letras (por ejemplo USD o EUR): el informe no la trae.');
+    }
+    const monedaGuardada = await this.repositorio.monedaDeCuenta(broker, cuenta);
+    if (monedaGuardada !== null && monedaGuardada !== '' && monedaGuardada !== moneda) {
+      throw new ErrorDeUsuario(`La cuenta ${broker} · ${cuenta} ya está guardada en ${monedaGuardada} y este informe es en ${moneda}. Revisa el nombre de la cuenta o la moneda.`);
+    }
+    const propietaria = { broker, cuenta, moneda };
     const operaciones = [...informe.cerradas, ...informe.abiertas].map((operacion) =>
       aOperacionGuardada(operacion, propietaria, importacionId, aUtc),
     );
@@ -83,6 +94,7 @@ export class ServicioImportacion {
       id: `${broker}:${cuenta}:${movimiento.ticket}`,
       broker,
       cuenta,
+      moneda,
       ticket: movimiento.ticket,
       descripcion: movimiento.descripcion,
       importe: movimiento.importe,
@@ -115,6 +127,7 @@ export class ServicioImportacion {
       id: importacionId,
       broker,
       cuenta,
+      moneda,
       plataforma: opciones.plataforma,
       nombreFichero: opciones.nombreFichero,
       horario: opciones.horario,
@@ -145,6 +158,7 @@ export class ServicioImportacion {
     return {
       broker,
       cuenta,
+      moneda,
       nombreFichero: opciones.nombreFichero,
       nuevas,
       cerradasDesdeAbierta,
@@ -168,7 +182,7 @@ function comprobarTotales(informe: InformeParseado): Comprobacion[] {
 
 function aOperacionGuardada(
   operacion: OperacionInforme,
-  propietaria: { readonly broker: string; readonly cuenta: string },
+  propietaria: { readonly broker: string; readonly cuenta: string; readonly moneda: string },
   importacionId: string,
   aUtc: (hora: string, descripcion: string) => number,
 ): OperacionGuardada {
@@ -177,6 +191,7 @@ function aOperacionGuardada(
     id: `${propietaria.broker}:${propietaria.cuenta}:${operacion.ticket}`,
     broker: propietaria.broker,
     cuenta: propietaria.cuenta,
+    moneda: propietaria.moneda,
     aperturaUtc: aUtc(operacion.aperturaBroker, `apertura de ${operacion.ticket}`),
     cierreUtc:
       operacion.cierreBroker === null ? null : aUtc(operacion.cierreBroker, `cierre de ${operacion.ticket}`),

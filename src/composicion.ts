@@ -8,7 +8,9 @@ import { abrirBaseDeDatos } from './adapters/storage/base-de-datos';
 import { RepositorioOperacionesDexie } from './adapters/storage/operaciones-repositorio';
 import { ParserVelasMt4Csv } from './adapters/candle-parsers/mt4-csv-parser';
 import { RepositorioVelasDexie } from './adapters/storage/velas-repositorio';
-import { COPIA_SEGURIDAD, TEMPORALIDADES, VISUALIZACION_HORAS } from './config/app-config';
+import { CAMBIO_MONEDAS, COPIA_SEGURIDAD, TEMPORALIDADES, VISUALIZACION_HORAS } from './config/app-config';
+import { ProveedorFrankfurter } from './adapters/cambio/frankfurter-proveedor';
+import { ServicioCambio } from './services/cambio/servicio-cambio';
 import { AlmacenDexie } from './adapters/storage/almacen-dexie';
 import { ServicioCopia } from './services/copia/servicio-copia';
 import { ServicioVelas } from './services/velas/servicio-velas';
@@ -28,6 +30,8 @@ export interface Aplicacion {
   readonly servicioImportacion: ServicioImportacion;
   readonly servicioVelas: ServicioVelas;
   readonly servicioCopia: ServicioCopia;
+  /** Conversor de la moneda de la cuenta a euros. */
+  readonly servicioCambio: ServicioCambio;
   readonly lectorDatos: LectorDatos;
   readonly lectorVentanas: LectorVentanas;
   readonly lectorHorarios: LectorHorarios;
@@ -41,8 +45,10 @@ export function crearAplicacion(): Aplicacion {
   const baseDeDatos = abrirBaseDeDatos();
   const repositorio = new RepositorioOperacionesDexie(baseDeDatos);
   const lectorDatos = new LectorDexie(baseDeDatos);
+  const preferencias = new PreferenciasNavegador();
   return {
     baseDeDatos,
+    servicioCambio: new ServicioCambio(preferencias, new ProveedorFrankfurter(CAMBIO_MONEDAS.urlApi), CAMBIO_MONEDAS),
     servicioImportacion: new ServicioImportacion(crearParsers(), repositorio),
     servicioCopia: new ServicioCopia(new AlmacenDexie(baseDeDatos), COPIA_SEGURIDAD),
     servicioVelas: new ServicioVelas(new ParserVelasMt4Csv(), lectorDatos, new RepositorioVelasDexie(baseDeDatos), TEMPORALIDADES),
@@ -50,7 +56,7 @@ export function crearAplicacion(): Aplicacion {
     lectorVentanas: new LectorVentanasDexie(baseDeDatos),
     lectorHorarios: new LectorHorariosDexie(baseDeDatos),
     preferenciaHoras: new PreferenciaModoHora(
-      new PreferenciasNavegador(),
+      preferencias,
       VISUALIZACION_HORAS.claveAlmacenamiento,
       VISUALIZACION_HORAS.modos.map((modo) => modo.id),
       VISUALIZACION_HORAS.inicial,

@@ -7,6 +7,7 @@ export interface MovimientoGuardado {
   readonly id: string;
   readonly broker: string;
   readonly cuenta: string;
+  readonly moneda: string;
   readonly ticket: string;
   readonly descripcion: string;
   readonly importe: number;
@@ -37,6 +38,7 @@ export interface RegistroImportacion {
   readonly id: string;
   readonly broker: string;
   readonly cuenta: string;
+  readonly moneda: string;
   readonly plataforma: Plataforma;
   readonly nombreFichero: string;
   readonly horario: HorarioBroker;

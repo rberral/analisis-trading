@@ -9,6 +9,7 @@ export function crearOperacion(ticket: string, cambios: Partial<OperacionGuardad
     id: `1:${ticket}`,
     broker: 'B',
     cuenta: '1',
+    moneda: 'USD',
     importacionId: 'imp',
     ticket,
     tipo: 'compra',

@@ -3,10 +3,15 @@ import { claveCuenta, mismaCuenta, type CuentaTrading } from '../../models/cuent
 import type { Filtro } from '../../models/filtro';
 import type { DatosGuardados } from './puertos';
 
-export function listarCuentas(datos: DatosGuardados): CuentaTrading[] {
-  const unicas = new Map<string, CuentaTrading>();
+export interface CuentaConMoneda extends CuentaTrading {
+  /** Vacía si los datos se guardaron antes de registrar la moneda. */
+  readonly moneda: string;
+}
+
+export function listarCuentas(datos: DatosGuardados): CuentaConMoneda[] {
+  const unicas = new Map<string, CuentaConMoneda>();
   for (const o of [...datos.operaciones, ...datos.movimientos]) {
-    unicas.set(claveCuenta(o), { broker: o.broker, cuenta: o.cuenta });
+    unicas.set(claveCuenta(o), { broker: o.broker, cuenta: o.cuenta, moneda: o.moneda });
   }
   return [...unicas.values()].sort((a, b) => a.broker.localeCompare(b.broker) || a.cuenta.localeCompare(b.cuenta));
 }

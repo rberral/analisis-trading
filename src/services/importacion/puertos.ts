@@ -22,6 +22,8 @@ export interface DatosAGuardar {
 export interface RepositorioOperaciones {
   /** Para cada id que ya existe, dice si la operación estaba abierta o cerrada. */
   estadoDeOperaciones(ids: readonly string[]): Promise<ReadonlyMap<string, 'abierta' | 'cerrada'>>;
+  /** Moneda con la que ya está guardada una cuenta, o null si es nueva. */
+  monedaDeCuenta(broker: string, cuenta: string): Promise<string | null>;
   /** Guarda todo o nada: si algo falla, no queda una importación a medias. */
   guardarImportacion(datos: DatosAGuardar): Promise<void>;
 }

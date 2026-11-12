@@ -1,10 +1,12 @@
 import { defineConfig, type Plugin } from 'vite';
+import { CAMBIO_MONEDAS } from './src/config/app-config';
 
 // Política de seguridad de contenido: solo se permite código y recursos de la propia web.
+// La única conexión externa permitida es la del conversor de moneda (CAMBIO_MONEDAS en la configuración).
 // Se añade únicamente al compilar, porque el servidor de desarrollo necesita scripts propios.
 const POLITICA_CSP =
   "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
-  "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
+  `connect-src 'self' ${new URL(CAMBIO_MONEDAS.urlApi).origin}; object-src 'none'; base-uri 'self'; form-action 'self'`;
 
 function insertarCspEnProduccion(): Plugin {
   return {

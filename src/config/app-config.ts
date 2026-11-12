@@ -257,3 +257,12 @@ export const COPIA_SEGURIDAD = {
   /** Palabra que hay que escribir para confirmar que se borran los datos. */
   palabraConfirmacion: 'BORRAR',
 } as const;
+
+/** Conversor de moneda a euros. El cambio automático usa la API pública y gratuita de Frankfurter (datos del BCE), sin clave. */
+export const CAMBIO_MONEDAS = {
+  monedaDestino: 'EUR',
+  /** Si se cambia el servidor, también se permite en la política de seguridad (vite.config.ts lo lee de aquí). */
+  urlApi: 'https://api.frankfurter.dev/v1/latest',
+  /** El cambio elegido se recuerda en el navegador con esta clave más la moneda («cambio-USD»). */
+  prefijoClave: 'cambio-',
+} as const;

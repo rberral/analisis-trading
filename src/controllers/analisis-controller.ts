@@ -3,6 +3,8 @@ import type { Aplicacion } from '../composicion';
 import { logger } from '../core/logger';
 import { analizarPeriodo, opcionesDelFiltro, type AnalisisPeriodo } from '../services/consultas/analisis-periodo';
 import { asegurarCuenta, listarCuentas } from '../services/consultas/cuentas';
+import { convertir, leerTasa, type TipoCambio } from '../services/cambio/servicio-cambio';
+import { crearConversor } from '../views/conversor-view';
 import type { DatosGuardados } from '../services/consultas/puertos';
 import type { VentanaVelas } from '../models/velas';
 import { crearPerfil } from '../services/analisis/perfil-estrategia';
@@ -28,11 +30,17 @@ type Dibujar = (analisis: AnalisisPeriodo, ventanas: VentanasPorOperacion, horas
  */
 function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Dibujar): HTMLElement {
   const zonaBarra = crearElemento('div');
+  const zonaConversor = crearElemento('div');
   const zonaContenido = crearElemento('div', { 'aria-live': 'polite' }, [crearElemento('p', { class: 'texto-suave' }, ['Cargando…'])]);
-  const pagina = crearElemento('div', {}, [crearElemento('h1', { class: 'titulo-pagina' }, [titulo]), zonaBarra, zonaContenido]);
+  const pagina = crearElemento('div', {}, [crearElemento('h1', { class: 'titulo-pagina' }, [titulo]), zonaBarra, zonaConversor, zonaContenido]);
 
   function mostrar(datos: DatosGuardados, ventanas: VentanasPorOperacion, horas: VisualizadorHoras): void {
-    const resultado = analizarPeriodo(datos, aplicacion.filtro.obtener());
+    const filtro = aplicacion.filtro.obtener();
+    const resultado = analizarPeriodo(datos, filtro);
+    const moneda = listarCuentas(datos).find((c) => filtro.cuenta !== null && c.broker === filtro.cuenta.broker && c.cuenta === filtro.cuenta.cuenta)?.moneda ?? '';
+    zonaConversor.replaceChildren(
+      typeof resultado === 'string' ? '' : crearConversor(opcionesConversor(aplicacion, moneda, resultado.estadisticas.beneficioNeto)),
+    );
     zonaContenido.replaceChildren(
       typeof resultado === 'string'
         ? crearElemento('p', { class: 'aviso aviso--atencion', role: 'alert' }, [resultado])
@@ -95,3 +103,28 @@ export const crearPaginaErrores = (aplicacion: Aplicacion): HTMLElement =>
       ventanas.size > 0,
     ),
   );
+
+const textoOrigen = (cambio: TipoCambio): string =>
+  cambio.origen === 'manual' ? 'escrito por ti' : `BCE, ${cambio.fecha ?? 'sin fecha'}`;
+
+function opcionesConversor(aplicacion: Aplicacion, moneda: string, importeInicial: number) {
+  const servicio = aplicacion.servicioCambio;
+  const guardado = servicio.obtener(moneda);
+  return {
+    moneda,
+    destino: servicio.monedaDestino,
+    importeInicial,
+    tasaInicial: guardado?.tasa ?? null,
+    origenInicial: guardado ? textoOrigen(guardado) : '',
+    leerTasa,
+    convertir,
+    alFijarManual: (texto: string) => {
+      const cambio = servicio.fijarManual(moneda, texto);
+      return { tasa: cambio.tasa, origen: textoOrigen(cambio) };
+    },
+    alActualizar: async () => {
+      const cambio = await servicio.actualizar(moneda);
+      return { tasa: cambio.tasa, origen: textoOrigen(cambio) };
+    },
+  };
+}
