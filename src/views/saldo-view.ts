@@ -17,9 +17,8 @@ function textoPrecision(saldo: ResumenSaldo): string {
   const origen = saldo.ingresosConHora
     ? 'Los ingresos y retiradas se conocen con su hora exacta.'
     : 'Los ingresos y retiradas solo se conocen por año (falta el estado de la cuenta en efectivo): el saldo en cada operación es aproximado.';
-  const comparacion = saldo.cuadra
-    ? `Precisión alta: el saldo calculado cuadra con el del broker (diferencia de ${importe(saldo.diferencia)}, por los cambios de moneda).`
-    : `El saldo calculado no cuadra con el del broker (diferencia de ${importe(saldo.diferencia)}): falta algún fichero, hay operaciones sin importar o los cambios de moneda del BCE se alejan de los de Quantfury.`;
+  // Solo informa: la diferencia no cambia ningún cálculo.
+  const comparacion = `Diferencia entre el saldo calculado y el del broker: ${importe(saldo.diferencia)} (solo informativo; puede deberse a los cambios de moneda, a algún fichero que falta o a operaciones sin importar).`;
   return `${comparacion} ${origen}`;
 }
 
