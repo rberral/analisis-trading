@@ -1,4 +1,4 @@
-import { type OpcionPlataforma } from '../config/app-config';
+import { type OpcionHorario, type OpcionPlataforma } from '../config/app-config';
 import type { Plataforma } from '../models/importacion';
 import type { ResultadoImportacion } from '../services/importacion/importacion-service';
 import type { Comprobacion } from '../services/importacion/validador-totales';
@@ -20,6 +20,7 @@ export interface VistaImportar {
 
 interface OpcionesVista {
   readonly plataformas: readonly OpcionPlataforma[];
+  readonly horarios: readonly OpcionHorario[];
   readonly alEnviar: (datos: DatosFormularioImportacion) => void;
 }
 
@@ -91,7 +92,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   }
   const campoFichero = crearControl<HTMLInputElement>('input', { type: 'file', name: 'fichero', accept: '.htm,.html' });
   const campoBroker = crearControl<HTMLInputElement>('input', { type: 'text', name: 'broker', placeholder: 'Nombre del broker' });
-  const campoHorario = crearCampoHorario();
+  const campoHorario = crearCampoHorario(opciones.horarios);
 
   const botonEnviar = crearControl<HTMLButtonElement>('button', { type: 'submit', class: 'boton' });
   botonEnviar.append('Importar y validar');

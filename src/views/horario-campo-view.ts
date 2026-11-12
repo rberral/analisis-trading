@@ -1,8 +1,12 @@
+import { OPCION_OTRA_REGLA, OPCION_OTRA_ZONA, type OpcionHorario } from '../config/app-config';
 import { crearElemento } from './dom';
 
 export interface DatosHorario {
-  readonly tipoHorario: 'zona' | 'nueva_york_mas' | null;
+  /** '' si no ha elegido nada; si no, el id de una opción predefinida o una de las dos especiales. */
+  readonly opcionHorario: string;
+  /** Solo con «Otra zona horaria». */
   readonly zona: string;
+  /** Solo con «Otra regla Nueva York + N horas». */
   readonly horas: string;
 }
 
@@ -11,36 +15,37 @@ export interface CampoHorario {
   leer(): DatosHorario;
 }
 
-let contadorGrupos = 0;
-
 /**
  * Selector del horario del servidor del broker. Lo usan la importación de informes
  * y la carga de velas, para que los dos pidan exactamente lo mismo.
+ * Empieza vacío a propósito: el usuario tiene que elegir, la aplicación no lo supone.
  */
-export function crearCampoHorario(): CampoHorario {
-  // Cada instancia necesita su propio nombre de grupo: los radios de dos formularios no deben mezclarse.
-  const nombreGrupo = `horario-${contadorGrupos++}`;
-  const campoZona = crearElemento('input', { type: 'text', name: 'zona', placeholder: 'Europe/Athens', 'aria-label': 'Nombre de la zona horaria' }) as HTMLInputElement;
-  const campoHoras = crearElemento('input', { type: 'number', name: 'horas', step: '1', placeholder: '7', 'aria-label': 'Horas de diferencia con Nueva York' }) as HTMLInputElement;
-  const radioZona = crearElemento('input', { type: 'radio', name: nombreGrupo, value: 'zona' }) as HTMLInputElement;
-  const radioNuevaYork = crearElemento('input', { type: 'radio', name: nombreGrupo, value: 'nueva_york_mas' }) as HTMLInputElement;
+export function crearCampoHorario(opciones: readonly OpcionHorario[]): CampoHorario {
+  const selector = crearElemento('select', { name: 'horario', 'aria-label': 'Horario del servidor del broker' }) as HTMLSelectElement;
+  selector.append(crearElemento('option', { value: '' }, ['Elige un horario…']));
+  for (const opcion of opciones) {
+    selector.append(crearElemento('option', { value: opcion.id }, [`${opcion.nombre} · ${opcion.detalle}`]));
+  }
+  selector.append(crearElemento('option', { value: OPCION_OTRA_ZONA }, ['Otra zona horaria (escribir su nombre)']));
+  selector.append(crearElemento('option', { value: OPCION_OTRA_REGLA }, ['Otra regla «Nueva York + N horas»']));
 
-  const opcion = (radio: HTMLElement, texto: string, control: HTMLElement) =>
-    crearElemento('div', { class: 'opcion-horario' }, [crearElemento('label', { class: 'opcion-horario__radio' }, [radio, texto]), control]);
+  const campoZona = crearElemento('input', { type: 'text', name: 'zona', placeholder: 'Por ejemplo: Asia/Dubai', 'aria-label': 'Nombre de la zona horaria' }) as HTMLInputElement;
+  const campoHoras = crearElemento('input', { type: 'number', name: 'horas', step: '1', placeholder: '7', 'aria-label': 'Horas de diferencia con Nueva York' }) as HTMLInputElement;
+  const filaZona = crearElemento('label', { class: 'campo', hidden: '' }, ['Nombre de la zona', campoZona]);
+  const filaHoras = crearElemento('label', { class: 'campo', hidden: '' }, ['Horas sobre Nueva York', campoHoras]);
+
+  selector.addEventListener('change', () => {
+    filaZona.hidden = selector.value !== OPCION_OTRA_ZONA;
+    filaHoras.hidden = selector.value !== OPCION_OTRA_REGLA;
+  });
 
   const elemento = crearElemento('fieldset', { class: 'grupo' }, [
     crearElemento('legend', {}, ['Horario del servidor del broker (obligatorio)']),
-    opcion(radioZona, 'Zona horaria con nombre', campoZona),
-    opcion(radioNuevaYork, 'Regla «Nueva York + N horas»', campoHoras),
+    selector,
+    filaZona,
+    filaHoras,
     crearElemento('p', { class: 'texto-suave' }, ['No hay valor por defecto: el fichero no incluye la zona horaria y la aplicación no la deduce.']),
   ]);
 
-  return {
-    elemento,
-    leer: () => ({
-      tipoHorario: radioZona.checked ? 'zona' : radioNuevaYork.checked ? 'nueva_york_mas' : null,
-      zona: campoZona.value,
-      horas: campoHoras.value,
-    }),
-  };
+  return { elemento, leer: () => ({ opcionHorario: selector.value, zona: campoZona.value, horas: campoHoras.value }) };
 }

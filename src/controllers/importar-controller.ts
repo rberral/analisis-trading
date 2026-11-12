@@ -1,4 +1,4 @@
-import { PLATAFORMAS } from '../config/app-config';
+import { HORARIOS_PREDEFINIDOS, PLATAFORMAS } from '../config/app-config';
 import { ErrorDeUsuario } from '../core/errores';
 import { logger } from '../core/logger';
 import type { ServicioImportacion } from '../services/importacion/importacion-service';
@@ -9,6 +9,7 @@ import { crearVistaImportar, type DatosFormularioImportacion } from '../views/im
 export function crearPaginaImportar(servicio: ServicioImportacion): HTMLElement {
   const vista = crearVistaImportar({
     plataformas: PLATAFORMAS,
+    horarios: HORARIOS_PREDEFINIDOS,
     alEnviar: (datos) => void importar(datos),
   });
 

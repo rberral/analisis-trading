@@ -1,4 +1,5 @@
-import type { Filtro, Periodo } from '../models/filtro';
+import type { ClasificacionCierre, Filtro, Periodo } from '../models/filtro';
+import { TEXTO_CLASIFICACION } from '../services/analisis/clasificacion-cierre';
 import type { OpcionesDelFiltro } from '../services/consultas/analisis-periodo';
 import { crearElemento } from './dom';
 
@@ -85,6 +86,9 @@ export function crearBarraFiltros(opciones: OpcionesBarra): HTMLElement {
     const selectorActivo = selector('Activo', [['', 'Todos los activos'], ...opciones.opciones.activos.map((a): [string, string] => [a, a])], filtro.activo ?? '');
     campos.push(etiquetado('Activo', selectorActivo));
 
+    const selectorCierre = selector('Cierre', [['', 'Todos los cierres'], ...(Object.keys(TEXTO_CLASIFICACION) as ClasificacionCierre[]).map((c): [string, string] => [c, TEXTO_CLASIFICACION[c]])], filtro.cierre ?? '');
+    campos.push(etiquetado('Cierre', selectorCierre));
+
     const selectorCuenta = selector('Cuenta', [['', 'Todas las cuentas'], ...opciones.opciones.cuentas.map((c): [string, string] => [c, c])], filtro.cuenta ?? '');
     if (opciones.opciones.cuentas.length > 1) campos.push(etiquetado('Cuenta', selectorCuenta));
 
@@ -93,6 +97,7 @@ export function crearBarraFiltros(opciones: OpcionesBarra): HTMLElement {
         periodo: periodoPorDefecto(selectorTipo.value as TipoPeriodo, opciones.opciones.anios, periodo),
         activo: selectorActivo.value || null,
         cuenta: selectorCuenta.value || null,
+        cierre: (selectorCierre.value || null) as ClasificacionCierre | null,
       };
       dibujar(nuevo);
       opciones.alCambiar(nuevo);
@@ -104,6 +109,7 @@ export function crearBarraFiltros(opciones: OpcionesBarra): HTMLElement {
         periodo: { ...periodo, ...detalles } as Periodo,
         activo: selectorActivo.value || null,
         cuenta: selectorCuenta.value || null,
+        cierre: (selectorCierre.value || null) as ClasificacionCierre | null,
       });
     };
     // Cada control reacciona a su propio cambio; el selector de tipo ya tiene su manejador.

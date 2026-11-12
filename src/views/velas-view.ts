@@ -1,4 +1,4 @@
-import type { OpcionTemporalidad } from '../config/app-config';
+import type { OpcionHorario, OpcionTemporalidad } from '../config/app-config';
 import type { RegistroCargaVelas, Temporalidad } from '../models/velas';
 import type { AnalisisCargaVelas } from '../services/velas/servicio-velas';
 import { crearElemento } from './dom';
@@ -23,6 +23,7 @@ export interface VistaVelas {
 
 interface OpcionesVista {
   readonly temporalidades: readonly OpcionTemporalidad[];
+  readonly horarios: readonly OpcionHorario[];
   /** Activos de las operaciones ya importadas: se sugieren al escribir. */
   readonly activos: readonly string[];
   readonly alAnalizar: (datos: DatosFormularioVelas) => void;
@@ -102,7 +103,7 @@ export function crearVistaVelas(opciones: OpcionesVista): VistaVelas {
   for (const t of opciones.temporalidades) selectorTemporalidad.append(crearElemento('option', { value: t.valor }, [t.nombre]));
   const campoFichero = crearElemento('input', { type: 'file', name: 'fichero', accept: '.csv,.txt' }) as HTMLInputElement;
   const campoBroker = crearElemento('input', { type: 'text', name: 'broker', placeholder: 'Nombre del broker' }) as HTMLInputElement;
-  const campoHorario = crearCampoHorario();
+  const campoHorario = crearCampoHorario(opciones.horarios);
   const botonAnalizar = crearElemento('button', { type: 'submit', class: 'boton' }, ['Analizar fichero']) as HTMLButtonElement;
 
   const formulario = crearElemento('form', { class: 'tarjeta formulario', novalidate: '' }, [

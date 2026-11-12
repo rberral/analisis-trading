@@ -2,7 +2,9 @@
  * Aplica un filtro (periodo, activo, cuenta) a las operaciones guardadas y
  * calcula estadísticas y curva de balance. Código puro: no toca la base de datos.
  */
-import type { Filtro } from '../../models/filtro';
+import { CLASIFICACION_CIERRE } from '../../config/app-config';
+import type { ClasificacionCierre, Filtro } from '../../models/filtro';
+import { crearClasificador } from '../analisis/clasificacion-cierre';
 import type { EstadisticasOperaciones } from '../../models/estadisticas';
 import type { MovimientoGuardado } from '../../models/importacion';
 import type { OperacionGuardada } from '../../models/operacion';
@@ -24,6 +26,8 @@ export interface AnalisisPeriodo {
   /** Balance de las operaciones al cierre de cada una, partiendo de balanceInicial. */
   readonly curva: readonly PuntoBalance[];
   readonly balanceInicial: number;
+  /** Cómo terminó cada operación cerrada del filtro (id → clasificación). */
+  readonly clasificacion: ReadonlyMap<string, ClasificacionCierre>;
 }
 
 export interface OpcionesDelFiltro {
@@ -83,17 +87,27 @@ export function analizarPeriodo(datos: DatosGuardados, filtro: Filtro): Analisis
   const movimientos = datos.movimientos.filter((m) => deLaCuenta(m.cuenta));
   const deLActivo = (o: OperacionGuardada) => filtro.activo === null || o.activo === filtro.activo;
 
+  // El contrato de cada activo se deduce con todas las operaciones, no solo con las filtradas.
+  const clasificar = crearClasificador(datos.operaciones, CLASIFICACION_CIERRE);
+  const cumpleCierre = (o: OperacionGuardada) => filtro.cierre === null || clasificar(o) === filtro.cierre;
+
   const operaciones = operacionesCuenta
-    .filter((o) => o.cierreUtc !== null && estaEnRango(o.cierreUtc, rango) && deLActivo(o))
+    .filter((o) => o.cierreUtc !== null && estaEnRango(o.cierreUtc, rango) && deLActivo(o) && cumpleCierre(o))
     .sort(porCierre);
-  const abiertas = operacionesCuenta.filter((o) => o.cierreUtc === null && deLActivo(o));
+  // Una operación abierta aún no tiene tipo de cierre: con ese filtro activo no se muestran.
+  const abiertas = filtro.cierre === null ? operacionesCuenta.filter((o) => o.cierreUtc === null && deLActivo(o)) : [];
+  const clasificacion = new Map<string, ClasificacionCierre>();
+  for (const operacion of operaciones) {
+    const clase = clasificar(operacion);
+    if (clase) clasificacion.set(operacion.id, clase);
+  }
 
   const balanceInicial = balanceInicialDelPeriodo(operacionesCuenta, movimientos, rango.desdeMs);
   const estadisticas = calcularEstadisticas(
     operaciones.map((o) => ({ ...o, cierre: o.cierreUtc ?? 0 })),
     balanceInicial,
   );
-  return { operaciones, abiertas, estadisticas, curva: crearCurva(operaciones, balanceInicial), balanceInicial };
+  return { operaciones, abiertas, estadisticas, curva: crearCurva(operaciones, balanceInicial), balanceInicial, clasificacion };
 }
 
 /** Valores que se ofrecen en los selectores del filtro. */

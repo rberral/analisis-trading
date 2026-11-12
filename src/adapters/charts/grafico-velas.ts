@@ -22,6 +22,8 @@ export interface MarcadorGrafico {
 }
 
 export interface DatosGrafico {
+  /** Decimales con los que se muestran los precios (5 en EURUSD, 3 en USDJPY, 2 en oro…). */
+  readonly decimales: number;
   readonly velas: readonly Vela[];
   readonly lineas: readonly LineaPrecio[];
   readonly marcadores: readonly MarcadorGrafico[];
@@ -31,12 +33,15 @@ export interface GraficoVelas {
   destruir(): void;
 }
 
+const TAMANIO_INICIAL = { ancho: 800, alto: 420 } as const;
 const FORMAS = { flecha_arriba: 'arrowUp', flecha_abajo: 'arrowDown', circulo: 'circle' } as const;
 const segundos = (ms: number): UTCTimestamp => Math.floor(ms / 1000) as UTCTimestamp;
 
 export function crearGraficoVelas(contenedor: HTMLElement, datos: DatosGrafico): GraficoVelas {
+  // Tamaño inicial razonable: si el contenedor aún no está en pantalla mide 0 y el gráfico saldría aplastado.
   const grafico = createChart(contenedor, {
-    autoSize: true,
+    width: contenedor.clientWidth || TAMANIO_INICIAL.ancho,
+    height: contenedor.clientHeight || TAMANIO_INICIAL.alto,
     layout: { background: { type: ColorType.Solid, color: COLORES_GRAFICO.fondo }, textColor: COLORES_GRAFICO.texto },
     grid: { vertLines: { color: COLORES_GRAFICO.cuadricula }, horzLines: { color: COLORES_GRAFICO.cuadricula } },
     timeScale: { timeVisible: true, secondsVisible: false },
@@ -47,6 +52,7 @@ export function crearGraficoVelas(contenedor: HTMLElement, datos: DatosGrafico):
     wickUpColor: COLORES_GRAFICO.velaAlcista,
     wickDownColor: COLORES_GRAFICO.velaBajista,
     borderVisible: false,
+    priceFormat: { type: 'price', precision: datos.decimales, minMove: 10 ** -datos.decimales },
   });
   const velas: CandlestickData<Time>[] = datos.velas.map((vela) => ({
     time: segundos(vela.utcMs),
@@ -65,7 +71,24 @@ export function crearGraficoVelas(contenedor: HTMLElement, datos: DatosGrafico):
     .sort((a, b) => a.velaUtcMs - b.velaUtcMs)
     .map((m) => ({ time: segundos(m.velaUtcMs), position: m.posicion === 'arriba' ? 'aboveBar' : 'belowBar', color: m.color, shape: FORMAS[m.forma], text: m.texto }));
   serie.setMarkers(marcas);
-  grafico.timeScale().fitContent();
 
-  return { destruir: () => grafico.remove() };
+  // El contenedor puede recibir su ancho real después de crear el gráfico (al insertarse en la página):
+  // se ajusta el tamaño y se encuadran las velas la primera vez que hay ancho, y el tamaño al cambiar la ventana.
+  let encuadrado = false;
+  const observador = new ResizeObserver(() => {
+    if (contenedor.clientWidth === 0) return;
+    grafico.resize(contenedor.clientWidth, contenedor.clientHeight || TAMANIO_INICIAL.alto);
+    if (!encuadrado) {
+      encuadrado = true;
+      grafico.timeScale().fitContent();
+    }
+  });
+  observador.observe(contenedor);
+
+  return {
+    destruir: () => {
+      observador.disconnect();
+      grafico.remove();
+    },
+  };
 }

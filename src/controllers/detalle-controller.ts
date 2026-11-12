@@ -1,13 +1,20 @@
-import { COLORES_GRAFICO, TEMPORALIDADES } from '../config/app-config';
+import { CLASIFICACION_CIERRE, COLORES_GRAFICO, TEMPORALIDADES } from '../config/app-config';
 import type { Aplicacion } from '../composicion';
 import { crearGraficoVelas, type GraficoVelas, type MarcadorGrafico } from '../adapters/charts/grafico-velas';
 import { logger } from '../core/logger';
 import type { OperacionGuardada } from '../models/operacion';
 import type { VentanaVelas } from '../models/velas';
+import { crearClasificador } from '../services/analisis/clasificacion-cierre';
 import { calcularRecorrido, evaluarSalidaPosterior } from '../services/analisis/recorrido';
 import { duracionDeTemporalidad, ventanaMasDetallada, velaQueContiene } from '../services/analisis/ventanas-operacion';
 import { crearElemento } from '../views/dom';
 import { crearSinVelas, crearTarjetaDatos, crearTarjetaRecorrido, crearTarjetaSalida } from '../views/detalle-view';
+
+/** Decimales con los que opera el activo, deducidos del precio de entrada (entre 2 y 5). */
+function decimalesDePrecio(precio: number): number {
+  const decimales = (String(precio).split('.')[1] ?? '').length;
+  return Math.min(5, Math.max(2, decimales));
+}
 
 function crearMarcadores(operacion: OperacionGuardada, ventana: VentanaVelas, duracionMs: number): MarcadorGrafico[] {
   const esCompra = operacion.tipo === 'compra';
@@ -46,7 +53,7 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
     const tarjetaSalida = crearTarjetaSalida(evaluarSalidaPosterior(operacion, ventana.velas));
     zona.replaceChildren(tarjetaGrafico, crearTarjetaRecorrido(recorrido), ...(tarjetaSalida ? [tarjetaSalida] : []));
     try {
-      grafico = crearGraficoVelas(contenedor, { velas: ventana.velas, lineas, marcadores: crearMarcadores(operacion, ventana, duracionMs) });
+      grafico = crearGraficoVelas(contenedor, { decimales: decimalesDePrecio(operacion.precioEntrada), velas: ventana.velas, lineas, marcadores: crearMarcadores(operacion, ventana, duracionMs) });
     } catch (error) {
       logger.error('No se pudo dibujar el gráfico', error);
       contenedor.replaceChildren('No se pudo dibujar el gráfico.');
@@ -81,7 +88,7 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
       crearElemento('a', { href: '#/operaciones', class: 'enlace' }, ['← Volver a Operaciones']),
       crearElemento('h1', { class: 'titulo-pagina' }, ['Detalle de la operación']),
       ...controles,
-      crearTarjetaDatos(operacion),
+      crearTarjetaDatos(operacion, crearClasificador(datos.operaciones, CLASIFICACION_CIERRE)(operacion)),
       zonaVelas,
     );
   }

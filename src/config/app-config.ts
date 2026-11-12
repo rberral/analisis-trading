@@ -5,6 +5,7 @@
  * solo importa este módulo. Al ser una web estática no hay secretos: todo lo que
  * se escriba aquí es público, así que nunca se deben añadir claves ni contraseñas.
  */
+import type { HorarioBroker } from '../core/horario';
 import type { Plataforma } from '../models/importacion';
 import type { Temporalidad } from '../models/velas';
 
@@ -169,3 +170,40 @@ export const COLORES_GRAFICO = {
   stopLoss: '#b91c1c',
   takeProfit: '#15803d',
 } as const;
+
+/**
+ * Un cierre automático con un movimiento de precio menor que este % del valor de la posición
+ * se considera break even. 0,01 % son unos 1,1 pips en EURUSD; con 0,1 % (11 pips) se mezclarían
+ * pérdidas reales pequeñas con los break even.
+ */
+export const CLASIFICACION_CIERRE = {
+  umbralBreakEvenPorcentaje: 0.01,
+} as const;
+
+export interface OpcionHorario {
+  readonly id: string;
+  readonly nombre: string;
+  /** Diferencia con UTC, para que el usuario reconozca su broker. */
+  readonly detalle: string;
+  readonly horario: HorarioBroker;
+}
+
+/**
+ * Horarios habituales del servidor del broker. No hay ninguno preseleccionado: el usuario debe elegir.
+ * Europa del Este y «Nueva York + 7» coinciden casi todo el año; difieren unas semanas en marzo y octubre/noviembre,
+ * porque EE. UU. y Europa cambian de hora en fechas distintas.
+ */
+export const HORARIOS_PREDEFINIDOS: readonly OpcionHorario[] = [
+  { id: 'europa_este', nombre: 'Europa del Este (Atenas, Chipre, Finlandia)', detalle: 'UTC+2, UTC+3 en verano', horario: { tipo: 'zona', zona: 'Europe/Athens' } },
+  { id: 'europa_central', nombre: 'Europa Central (Madrid, París, Berlín)', detalle: 'UTC+1, UTC+2 en verano', horario: { tipo: 'zona', zona: 'Europe/Berlin' } },
+  { id: 'reino_unido', nombre: 'Reino Unido y Portugal (Londres)', detalle: 'UTC+0, UTC+1 en verano', horario: { tipo: 'zona', zona: 'Europe/London' } },
+  { id: 'nueva_york', nombre: 'Nueva York (costa este de EE. UU.)', detalle: 'UTC−5, UTC−4 en verano', horario: { tipo: 'zona', zona: 'America/New_York' } },
+  { id: 'nueva_york_mas_7', nombre: 'Nueva York + 7 horas (habitual en brokers de divisas)', detalle: 'UTC+2, UTC+3 con el verano de EE. UU.', horario: { tipo: 'nueva_york_mas', horas: 7 } },
+  { id: 'utc', nombre: 'UTC', detalle: 'UTC+0 fijo, sin cambio de hora', horario: { tipo: 'zona', zona: 'UTC' } },
+  { id: 'utc_mas_2', nombre: 'Fijo UTC+2', detalle: 'sin cambio de hora', horario: { tipo: 'zona', zona: 'Etc/GMT-2' } },
+  { id: 'utc_mas_3', nombre: 'Fijo UTC+3', detalle: 'sin cambio de hora', horario: { tipo: 'zona', zona: 'Etc/GMT-3' } },
+];
+
+/** Opciones especiales del selector de horario que no son una zona concreta. */
+export const OPCION_OTRA_ZONA = 'otra_zona';
+export const OPCION_OTRA_REGLA = 'otra_regla';

@@ -38,7 +38,7 @@ npm run build   # comprueba los tipos y genera la carpeta dist/
 
 ## Importar operaciones (MetaTrader 4)
 
-En la pantalla **Importar** eliges el informe HTML (se recomienda el *Detailed Statement*, que incluye totales para validar), indicas el horario del servidor del broker (zona con nombre, p. ej. `Europe/Athens`, o la regla «Nueva York + N horas») y la aplicación:
+En la pantalla **Importar** eliges el informe HTML (se recomienda el *Detailed Statement*, que incluye totales para validar), indicas el horario del servidor del broker (lista de horarios habituales con su UTC, o una zona/regla propia; no hay ninguno preseleccionado) y la aplicación:
 
 - convierte todas las horas a UTC (sin deducir nada: el horario es obligatorio);
 - guarda solo las operaciones nuevas y actualiza las que estaban abiertas y ya se han cerrado;
@@ -66,7 +66,7 @@ Para probar la versión de producción (con la política de seguridad activa) en
 
 ## Panel, Operaciones y Errores
 
-Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.
+Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. El filtro **Cierre** clasifica por resultado, no por la etiqueta de MetaTrader (que llama «stop loss» también a los stops movidos a beneficio): Take profit (cierre automático con ganancia), Stop loss (con pérdida), Break even (movimiento de precio menor al 0,01 % del valor de la posición; `CLASIFICACION_CIERRE` en la configuración) y Manual. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.
 
 Errores detectados solo con el informe (umbrales en `src/config/app-config.ts`): operaciones sin stop loss, pérdidas desproporcionadas, subir lotes tras perder, sobreoperación diaria y perdedoras más largas que las ganadoras.
 

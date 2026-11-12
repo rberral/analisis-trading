@@ -1,4 +1,4 @@
-import { TEMPORALIDADES } from '../config/app-config';
+import { HORARIOS_PREDEFINIDOS, TEMPORALIDADES } from '../config/app-config';
 import type { Aplicacion } from '../composicion';
 import { ErrorDeUsuario } from '../core/errores';
 import { logger } from '../core/logger';
@@ -58,7 +58,7 @@ export function crearPaginaVelas(aplicacion: Aplicacion): HTMLElement {
   async function iniciar(): Promise<void> {
     const datos = await aplicacion.lectorDatos.leerTodo();
     const activos = [...new Set(datos.operaciones.map((operacion) => operacion.activo))].sort();
-    vista = crearVistaVelas({ temporalidades: TEMPORALIDADES, activos, alAnalizar, alGuardar });
+    vista = crearVistaVelas({ temporalidades: TEMPORALIDADES, horarios: HORARIOS_PREDEFINIDOS, activos, alAnalizar, alGuardar });
     contenedor.replaceChildren(vista.elemento);
     vista.mostrarCargas(await servicio.listarCargas());
   }

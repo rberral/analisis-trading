@@ -21,6 +21,8 @@ Diario de trading: web estática (TypeScript + Vite, sin framework; Dexie, Light
 4. Velas: carga del CSV de MT4 (activo, temporalidad, horario, broker opcional), comprobación del horario con desfases -3..+3 h (no corrige sola), y guardado solo de las ventanas de velas por operación cerrada (IndexedDB v3). Pantalla «Velas y ficheros» con la lista de cargas.
 5. Detalle de operación (gráfico con Lightweight Charts, ruta `#/operaciones/<id>`), MFE/MAE, qué pasó tras cerrar a mano, salidas anticipadas en Errores y perfil de la operativa en el Panel. Pendiente de verificar en navegador: el gráfico (la librería no se pudo probar en el contenedor) y que funcione con la CSP de producción (`npm run build` + `npm run preview`).
 
+Cambios tras las pruebas del usuario (12-nov): gráfico centrado y con 5 decimales; filtro «Cierre» (Take profit / Stop loss / Break even / Manual por resultado, umbral 0,01 %); lista de horarios predefinidos sin valor por defecto (Europa del Este = Europe/Athens, UTC+2 y UTC+3 en verano, es el broker del usuario). Pendiente de decidir: mostrar el gráfico y las tablas en hora del broker (con interruptor a UTC); hoy todo se muestra en UTC.
+
 ## Pendiente (hoja de ruta)
 6. Exportar a TradingView (Pine Script, límite ≈500 objetos de dibujo, mapeo de símbolos, manual).
 7. Copia de seguridad (exportar/importar JSON).

@@ -360,3 +360,8 @@ select {
 .tabla-datos td {
   padding: 6px 0;
 }
+
+/* El atributo hidden debe ganar a cualquier regla de display de las clases */
+[hidden] {
+  display: none !important;
+}

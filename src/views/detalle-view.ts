@@ -1,5 +1,7 @@
 import type { EvaluacionSalida, Recorrido } from '../models/analisis-operacion';
 import type { OperacionGuardada } from '../models/operacion';
+import type { ClasificacionCierre } from '../models/filtro';
+import { TEXTO_CLASIFICACION } from '../services/analisis/clasificacion-cierre';
 import { crearElemento } from './dom';
 import { fechaHoraUtc, importe, precio } from './formato';
 
@@ -20,7 +22,7 @@ function filaDato(nombre: string, valor: string): HTMLElement {
   return crearElemento('tr', {}, [crearElemento('th', {}, [nombre]), crearElemento('td', {}, [valor])]);
 }
 
-export function crearTarjetaDatos(o: OperacionGuardada): HTMLElement {
+export function crearTarjetaDatos(o: OperacionGuardada, clasificacion: ClasificacionCierre | null): HTMLElement {
   const resultado = neto(o);
   const filas = [
     filaDato('Tipo y tamaño', `${o.tipo === 'compra' ? 'Compra' : 'Venta'} · ${importe(o.lotes)} lotes`),
@@ -31,7 +33,8 @@ export function crearTarjetaDatos(o: OperacionGuardada): HTMLElement {
     filaDato('Cierre (UTC)', o.cierreUtc === null ? 'Sigue abierta' : fechaHoraUtc(o.cierreUtc)),
     filaDato('Duración', o.cierreUtc === null ? '—' : duracionLegible(o.cierreUtc - o.aperturaUtc)),
     filaDato('Precio de cierre', precio(o.precioCierre)),
-    filaDato('Cerrada por', o.cierrePor ? TEXTO_CIERRE[o.cierrePor] : '—'),
+    filaDato('Cierre', clasificacion ? TEXTO_CLASIFICACION[clasificacion] : '—'),
+    filaDato('Registrado por la plataforma como', o.cierrePor ? TEXTO_CIERRE[o.cierrePor] : '—'),
     filaDato('Beneficio / comisión / swap', `${importe(o.beneficio)} / ${importe(o.comision)} / ${importe(o.swap)}`),
     filaDato('Resultado neto', importe(resultado)),
   ];

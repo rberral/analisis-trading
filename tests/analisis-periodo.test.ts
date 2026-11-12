@@ -31,20 +31,20 @@ describe('analizarPeriodo', () => {
   });
 
   it('en un mes parte del balance que había al empezar ese mes', () => {
-    const a = analizar({ periodo: { tipo: 'mes', anio: 2026, mes: 2 }, activo: null, cuenta: null });
+    const a = analizar({ periodo: { tipo: 'mes', anio: 2026, mes: 2 }, activo: null, cuenta: null, cierre: null });
     expect(a.operaciones.map((o) => o.ticket)).toEqual(['11']);
     expect(a.balanceInicial).toBe(1100);
     expect(a.estadisticas.drawdownMaximo).toBe(40);
   });
 
   it('filtra por activo', () => {
-    const a = analizar({ periodo: { tipo: 'total' }, activo: 'XAUUSD', cuenta: null });
+    const a = analizar({ periodo: { tipo: 'total' }, activo: 'XAUUSD', cuenta: null, cierre: null });
     expect(a.operaciones.map((o) => o.ticket)).toEqual(['11']);
     expect(a.abiertas).toHaveLength(0);
   });
 
   it('devuelve un mensaje si el periodo no es válido', () => {
-    expect(typeof analizarPeriodo(datos, { periodo: { tipo: 'rango', desde: '', hasta: '' }, activo: null, cuenta: null })).toBe('string');
+    expect(typeof analizarPeriodo(datos, { periodo: { tipo: 'rango', desde: '', hasta: '' }, activo: null, cuenta: null, cierre: null })).toBe('string');
   });
 
   it('funciona sin operaciones', () => {
