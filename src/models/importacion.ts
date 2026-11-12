@@ -3,8 +3,9 @@ import type { HorarioBroker } from '../core/horario';
 export type Plataforma = 'mt4';
 
 export interface MovimientoGuardado {
-  /** "cuenta:ticket" */
+  /** "broker:cuenta:ticket" */
   readonly id: string;
+  readonly broker: string;
   readonly cuenta: string;
   readonly ticket: string;
   readonly descripcion: string;
@@ -23,6 +24,7 @@ export interface InstantaneaAbierta {
   /** "importacionId:ticket" */
   readonly id: string;
   readonly importacionId: string;
+  readonly broker: string;
   readonly cuenta: string;
   readonly ticket: string;
   readonly fechaMs: number;
@@ -33,10 +35,10 @@ export interface InstantaneaAbierta {
 
 export interface RegistroImportacion {
   readonly id: string;
+  readonly broker: string;
   readonly cuenta: string;
   readonly plataforma: Plataforma;
   readonly nombreFichero: string;
-  readonly broker: string | null;
   readonly horario: HorarioBroker;
   readonly fechaMs: number;
   readonly nuevas: number;

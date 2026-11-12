@@ -1,3 +1,4 @@
+import type { CuentaTrading } from './cuenta';
 /** Periodo de tiempo por el que se filtran las operaciones (siempre en UTC). */
 export type Periodo =
   | { readonly tipo: 'total' }
@@ -14,8 +15,8 @@ export interface Filtro {
   readonly periodo: Periodo;
   /** null = todos los activos. */
   readonly activo: string | null;
-  /** null = todas las cuentas. */
-  readonly cuenta: string | null;
+  /** null = todas las cuentas (las pantallas siempre eligen una: no se mezclan estrategias). */
+  readonly cuenta: CuentaTrading | null;
   /** null = todas. */
   readonly cierre: ClasificacionCierre | null;
 }

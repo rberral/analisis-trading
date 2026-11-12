@@ -38,6 +38,8 @@ npm run build   # comprueba los tipos y genera la carpeta dist/
 
 ## Importar operaciones (MetaTrader 4)
 
+Al importar hay que indicar el **broker** (obligatorio) y la **cuenta** (opcional; si se deja vacía se usa el número de cuenta del informe). Broker + cuenta identifican de dónde vienen los datos: Panel, Operaciones, Errores y Exportar trabajan siempre con una sola cuenta, que se elige en la barra de filtros, porque cada una puede usar una estrategia distinta. Hay que escribir siempre igual el broker y la cuenta al importar informes nuevos de la misma cuenta. Las velas no se separan por broker.
+
 En la pantalla **Importar** eliges el informe HTML (se recomienda el *Detailed Statement*, que incluye totales para validar), indicas el horario del servidor del broker (lista de horarios habituales con su UTC, o una zona/regla propia; no hay ninguno preseleccionado) y la aplicación:
 
 - convierte todas las horas a UTC (sin deducir nada: el horario es obligatorio);

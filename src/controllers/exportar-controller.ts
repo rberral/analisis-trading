@@ -5,6 +5,7 @@ import { logger } from '../core/logger';
 import type { ModoHora } from '../models/visualizacion';
 import { crearCalculadorSaldo } from '../services/analisis/saldo-apertura';
 import { analizarPeriodo, opcionesDelFiltro } from '../services/consultas/analisis-periodo';
+import { asegurarCuenta, listarCuentas } from '../services/consultas/cuentas';
 import type { DatosGuardados } from '../services/consultas/puertos';
 import { generarScriptsPine, agruparPorActivo } from '../services/exportacion/generador-pine';
 import { crearVisualizador } from '../services/visualizacion/visualizador-horas';
@@ -48,9 +49,12 @@ export function crearPaginaExportar(aplicacion: Aplicacion): HTMLElement {
       );
     };
 
+    const cuentas = listarCuentas(datos);
+    aplicacion.filtro.fijar(asegurarCuenta(aplicacion.filtro.obtener(), cuentas));
     zonaFiltros.replaceChildren(
       crearBarraFiltros({
-        opciones: opcionesDelFiltro(datos),
+        cuentas,
+        opcionesDe: (cuenta) => opcionesDelFiltro(datos, cuenta),
         filtro: aplicacion.filtro.obtener(),
         alCambiar: (filtro) => {
           aplicacion.filtro.fijar(filtro);

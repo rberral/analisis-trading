@@ -3,6 +3,7 @@
  * calcula estadísticas y curva de balance. Código puro: no toca la base de datos.
  */
 import { CLASIFICACION_CIERRE } from '../../config/app-config';
+import { mismaCuenta, type CuentaTrading } from '../../models/cuenta';
 import type { ClasificacionCierre, Filtro } from '../../models/filtro';
 import { crearClasificador } from '../analisis/clasificacion-cierre';
 import type { EstadisticasOperaciones } from '../../models/estadisticas';
@@ -32,7 +33,6 @@ export interface AnalisisPeriodo {
 
 export interface OpcionesDelFiltro {
   readonly activos: readonly string[];
-  readonly cuentas: readonly string[];
   readonly anios: readonly number[];
 }
 
@@ -82,9 +82,9 @@ export function analizarPeriodo(datos: DatosGuardados, filtro: Filtro): Analisis
   const rango: RangoUtc | string = rangoDePeriodo(filtro.periodo);
   if (typeof rango === 'string') return rango;
 
-  const deLaCuenta = (cuenta: string) => filtro.cuenta === null || cuenta === filtro.cuenta;
-  const operacionesCuenta = datos.operaciones.filter((o) => deLaCuenta(o.cuenta));
-  const movimientos = datos.movimientos.filter((m) => deLaCuenta(m.cuenta));
+  const deLaCuenta = (cuenta: CuentaTrading) => filtro.cuenta === null || mismaCuenta(cuenta, filtro.cuenta);
+  const operacionesCuenta = datos.operaciones.filter((o) => deLaCuenta(o));
+  const movimientos = datos.movimientos.filter((m) => deLaCuenta(m));
   const deLActivo = (o: OperacionGuardada) => filtro.activo === null || o.activo === filtro.activo;
 
   // El saldo al abrir se calcula con todo lo guardado, no solo con lo filtrado.
@@ -110,14 +110,10 @@ export function analizarPeriodo(datos: DatosGuardados, filtro: Filtro): Analisis
   return { operaciones, abiertas, estadisticas, curva: crearCurva(operaciones, balanceInicial), balanceInicial, clasificacion };
 }
 
-/** Valores que se ofrecen en los selectores del filtro. */
-export function opcionesDelFiltro(datos: DatosGuardados): OpcionesDelFiltro {
-  const ordenado = (valores: Iterable<string>) => [...new Set(valores)].sort();
-  const cierres = datos.operaciones.flatMap((o) => (o.cierreUtc === null ? [] : [o.cierreUtc]));
+/** Valores que se ofrecen en los selectores del filtro, solo de la cuenta elegida (null = todas). */
+export function opcionesDelFiltro(datos: DatosGuardados, cuenta: CuentaTrading | null): OpcionesDelFiltro {
+  const operaciones = datos.operaciones.filter((o) => cuenta === null || mismaCuenta(o, cuenta));
+  const cierres = operaciones.flatMap((o) => (o.cierreUtc === null ? [] : [o.cierreUtc]));
   const anios = [...new Set(cierres.map((ms) => new Date(ms).getUTCFullYear()))].sort((a, b) => b - a);
-  return {
-    activos: ordenado(datos.operaciones.map((o) => o.activo)),
-    cuentas: ordenado(datos.operaciones.map((o) => o.cuenta)),
-    anios,
-  };
+  return { activos: [...new Set(operaciones.map((o) => o.activo))].sort(), anios };
 }

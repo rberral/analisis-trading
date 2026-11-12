@@ -1,10 +1,14 @@
+import { claveCuenta, textoCuenta, type CuentaTrading } from '../models/cuenta';
 import type { ClasificacionCierre, Filtro, Periodo } from '../models/filtro';
 import { TEXTO_CLASIFICACION } from '../services/analisis/clasificacion-cierre';
 import type { OpcionesDelFiltro } from '../services/consultas/analisis-periodo';
 import { crearElemento } from './dom';
 
 interface OpcionesBarra {
-  readonly opciones: OpcionesDelFiltro;
+  /** Cuentas (broker + cuenta) guardadas; siempre hay una elegida. */
+  readonly cuentas: readonly CuentaTrading[];
+  /** Activos y años que tiene la cuenta elegida. */
+  readonly opcionesDe: (cuenta: CuentaTrading | null) => OpcionesDelFiltro;
   readonly filtro: Filtro;
   readonly alCambiar: (filtro: Filtro) => void;
 }
@@ -50,17 +54,20 @@ function periodoPorDefecto(tipo: TipoPeriodo, anios: readonly number[], anterior
   }
 }
 
-/** Barra de filtros: periodo, activo y (si hay varias) cuenta. Se redibuja sola al cambiar el tipo de periodo. */
+/** Barra de filtros: cuenta (broker + cuenta), periodo, activo y cierre. Se redibuja sola al cambiar la cuenta o el tipo de periodo. */
 export function crearBarraFiltros(opciones: OpcionesBarra): HTMLElement {
   const barra = crearElemento('form', { class: 'tarjeta barra-filtros', novalidate: '' });
 
   function dibujar(filtro: Filtro): void {
     const periodo = filtro.periodo;
+    const disponibles = opciones.opcionesDe(filtro.cuenta);
+    const selectorCuenta = selector('Cuenta de trading', opciones.cuentas.map((c): [string, string] => [claveCuenta(c), textoCuenta(c)]), filtro.cuenta ? claveCuenta(filtro.cuenta) : '');
+    const cuentaElegida = (): CuentaTrading | null => opciones.cuentas.find((c) => claveCuenta(c) === selectorCuenta.value) ?? null;
     const selectorTipo = selector('Periodo', NOMBRES_PERIODO.map(([v, t]) => [v, t]), periodo.tipo);
-    const campos: HTMLElement[] = [etiquetado('Periodo', selectorTipo)];
+    const campos: HTMLElement[] = [etiquetado('Cuenta de trading', selectorCuenta), etiquetado('Periodo', selectorTipo)];
     const leer: Array<() => Partial<Periodo>> = [];
 
-    const aniosOpcion = opciones.opciones.anios.map((a): [string, string] => [String(a), String(a)]);
+    const aniosOpcion = disponibles.anios.map((a): [string, string] => [String(a), String(a)]);
     if ('anio' in periodo) {
       const control = selector('Año', aniosOpcion, String(periodo.anio));
       campos.push(etiquetado('Año', control));
@@ -83,41 +90,45 @@ export function crearBarraFiltros(opciones: OpcionesBarra): HTMLElement {
       leer.push(() => ({ desde: desde.value, hasta: hasta.value }));
     }
 
-    const selectorActivo = selector('Activo', [['', 'Todos los activos'], ...opciones.opciones.activos.map((a): [string, string] => [a, a])], filtro.activo ?? '');
+    const selectorActivo = selector('Activo', [['', 'Todos los activos'], ...disponibles.activos.map((a): [string, string] => [a, a])], filtro.activo ?? '');
     campos.push(etiquetado('Activo', selectorActivo));
 
     const selectorCierre = selector('Cierre', [['', 'Todos los cierres'], ...(Object.keys(TEXTO_CLASIFICACION) as ClasificacionCierre[]).map((c): [string, string] => [c, TEXTO_CLASIFICACION[c]])], filtro.cierre ?? '');
     campos.push(etiquetado('Cierre', selectorCierre));
 
-    const selectorCuenta = selector('Cuenta', [['', 'Todas las cuentas'], ...opciones.opciones.cuentas.map((c): [string, string] => [c, c])], filtro.cuenta ?? '');
-    if (opciones.opciones.cuentas.length > 1) campos.push(etiquetado('Cuenta', selectorCuenta));
-
     selectorTipo.addEventListener('change', () => {
       const nuevo: Filtro = {
-        periodo: periodoPorDefecto(selectorTipo.value as TipoPeriodo, opciones.opciones.anios, periodo),
+        periodo: periodoPorDefecto(selectorTipo.value as TipoPeriodo, disponibles.anios, periodo),
         activo: selectorActivo.value || null,
-        cuenta: selectorCuenta.value || null,
+        cuenta: cuentaElegida(),
         cierre: (selectorCierre.value || null) as ClasificacionCierre | null,
       };
       dibujar(nuevo);
       opciones.alCambiar(nuevo);
     });
 
-    const alCambiarOtro = () => {
+    const construirFiltro = (): Filtro => {
       const detalles = Object.assign({}, ...leer.map((funcion) => funcion())) as Partial<Periodo>;
-      opciones.alCambiar({
+      return {
         periodo: { ...periodo, ...detalles } as Periodo,
         activo: selectorActivo.value || null,
-        cuenta: selectorCuenta.value || null,
+        cuenta: cuentaElegida(),
         cierre: (selectorCierre.value || null) as ClasificacionCierre | null,
-      });
+      };
     };
+    const alCambiarOtro = () => opciones.alCambiar(construirFiltro());
+    // Al cambiar de cuenta cambian los activos y años disponibles: se redibuja con el activo sin elegir.
+    selectorCuenta.addEventListener('change', () => {
+      const nuevo: Filtro = { ...construirFiltro(), activo: null };
+      dibujar(nuevo);
+      opciones.alCambiar(nuevo);
+    });
     // Cada control reacciona a su propio cambio; el selector de tipo ya tiene su manejador.
-    for (const campo of campos.slice(1)) {
+    for (const campo of campos.slice(2)) {
       campo.querySelector('select,input')?.addEventListener('change', alCambiarOtro);
     }
 
-    campos.push(crearElemento('p', { class: 'texto-suave barra-filtros__nota' }, ['Los periodos (año, trimestre, mes y rango) se cuentan en UTC, según la hora de cierre de cada operación.']));
+    campos.push(crearElemento('p', { class: 'texto-suave barra-filtros__nota' }, ['Cada cuenta (broker + cuenta) se analiza por separado, porque puede tener una estrategia distinta. Los periodos (año, trimestre, mes y rango) se cuentan en UTC, según la hora de cierre de cada operación.']));
     barra.replaceChildren(...campos);
   }
 

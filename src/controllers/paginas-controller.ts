@@ -19,7 +19,7 @@ const PAGINAS: Readonly<Record<string, FabricaDePagina>> = {
   '/velas': (aplicacion) => crearPaginaVelas(aplicacion),
   '/sobre': () => crearPaginaSobre(),
   '/exportar': (aplicacion) => crearPaginaExportar(aplicacion),
-  '/importar': (aplicacion) => crearPaginaImportar(aplicacion.servicioImportacion),
+  '/importar': (aplicacion) => crearPaginaImportar(aplicacion),
 };
 
 /**

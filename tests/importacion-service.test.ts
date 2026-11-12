@@ -29,7 +29,8 @@ class RepositorioEnMemoria implements RepositorioOperaciones {
 const OPCIONES: OpcionesImportacion = {
   plataforma: 'mt4',
   nombreFichero: 'informe.htm',
-  broker: null,
+  broker: 'IC Markets',
+  cuenta: '',
   horario: { tipo: 'zona', zona: 'Europe/Athens' },
 };
 
@@ -57,7 +58,7 @@ describe('ServicioImportacion', () => {
     expect(r.abiertas).toBe(1);
     expect(r.movimientos).toBe(2);
     expect(r.comprobaciones.filter((c) => c.estado === 'diferencia')).toEqual([]);
-    expect(repositorio.operaciones.get('1000001:1001')?.cierreUtc).not.toBeNull();
+    expect(repositorio.operaciones.get('IC Markets:1000001:1001')?.cierreUtc).not.toBeNull();
   });
 
   it('al repetir la importación no duplica las cerradas', async () => {
@@ -71,12 +72,27 @@ describe('ServicioImportacion', () => {
   it('detecta una operación abierta que en la siguiente importación ya está cerrada', async () => {
     const { servicio, repositorio } = crear();
     await servicio.importar(INFORME_MT4_EJEMPLO, OPCIONES);
-    expect(repositorio.operaciones.get('1000001:1007')?.cierreUtc).toBeNull();
+    expect(repositorio.operaciones.get('IC Markets:1000001:1007')?.cierreUtc).toBeNull();
 
     const segunda = await servicio.importar(informeConLaAbiertaCerrada(), OPCIONES);
     expect(segunda.cerradasDesdeAbierta).toBe(1);
     expect(segunda.nuevas).toBe(0);
-    expect(repositorio.operaciones.get('1000001:1007')?.cierreUtc).not.toBeNull();
+    expect(repositorio.operaciones.get('IC Markets:1000001:1007')?.cierreUtc).not.toBeNull();
+  });
+
+  it('exige el broker', async () => {
+    const { servicio, repositorio } = crear();
+    await expect(servicio.importar(INFORME_MT4_EJEMPLO, { ...OPCIONES, broker: '  ' })).rejects.toThrow(ErrorDeUsuario);
+    expect(repositorio.importaciones).toBe(0);
+  });
+
+  it('usa el nombre de cuenta indicado o, si falta, el número del informe', async () => {
+    const { servicio, repositorio } = crear();
+    expect((await servicio.importar(INFORME_MT4_EJEMPLO, OPCIONES)).cuenta).toBe('1000001');
+    const r = await servicio.importar(INFORME_MT4_EJEMPLO, { ...OPCIONES, cuenta: 'Scalping' });
+    expect(r.cuenta).toBe('Scalping');
+    expect(r.nuevas).toBe(5); // otra cuenta: no se confunde con la anterior
+    expect(repositorio.operaciones.get('IC Markets:Scalping:1001')?.cuenta).toBe('Scalping');
   });
 
   it('rechaza un horario inválido antes de leer nada', async () => {

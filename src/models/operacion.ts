@@ -41,8 +41,9 @@ export interface MovimientoInforme {
 
 /** Operación guardada en la base de datos del navegador. */
 export interface OperacionGuardada extends OperacionInforme {
-  /** "cuenta:ticket": identifica la operación aunque se importe dos veces. */
+  /** "broker:cuenta:ticket": identifica la operación aunque se importe dos veces. */
   readonly id: string;
+  readonly broker: string;
   readonly cuenta: string;
   readonly aperturaUtc: number;
   /** null si sigue abierta. */

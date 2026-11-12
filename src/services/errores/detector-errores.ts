@@ -98,7 +98,7 @@ function detectarLotesTrasPerdida(operaciones: readonly OperacionGuardada[], umb
   const afectadas: OperacionGuardada[] = [];
   porApertura.forEach((actual, indice) => {
     const anterior = porApertura[indice - 1];
-    if (!anterior || anterior.cuenta !== actual.cuenta) return;
+    if (!anterior || anterior.broker !== actual.broker || anterior.cuenta !== actual.cuenta) return;
     const anteriorCerradaYPerdedora = (anterior.cierreUtc ?? Infinity) <= actual.aperturaUtc && neto(anterior) < 0;
     if (anteriorCerradaYPerdedora && actual.lotes >= anterior.lotes * umbrales.aumentoDeLotesTrasPerdida) {
       afectadas.push(actual);

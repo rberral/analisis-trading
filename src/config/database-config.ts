@@ -41,5 +41,15 @@ export const BASE_DE_DATOS_CONFIG = {
         cargasVelas: 'id, activo, fechaMs',
       },
     },
+    {
+      version: 4,
+      tablas: {
+        // Todo se separa por broker + cuenta. id = "broker:cuenta:ticket".
+        operaciones: 'id, broker, cuenta, activo, aperturaUtc, cierreUtc',
+        movimientos: 'id, broker, cuenta, utcMs',
+        importaciones: 'id, broker, cuenta, fechaMs',
+        instantaneasAbiertas: 'id, importacionId, [broker+cuenta+ticket]',
+      },
+    },
   ] as readonly VersionEsquema[],
 } as const;

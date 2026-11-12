@@ -9,7 +9,7 @@ import { crearOperacion } from './fixtures/operaciones';
 const HORA = 3_600_000;
 const T0 = Date.UTC(2026, 0, 1);
 // Saldo 10 000 desde el 1 de enero: el 0,1 % son 10 USD.
-const ingreso = { cuenta: '1', utcMs: T0, importe: 10_000 } as never;
+const ingreso = { broker: 'B', cuenta: '1', utcMs: T0, importe: 10_000 } as never;
 
 function op(ticket: string, beneficio: number, cierrePor: 'tp' | 'sl' | 'manual', extra = {}) {
   return crearOperacion(ticket, { beneficio, cierrePor, ...extra });
@@ -23,10 +23,10 @@ describe('crearCalculadorSaldo', () => {
   it('suma ingresos y resultado de las operaciones ya cerradas', () => {
     const cerrada = op('1', 500, 'tp', { aperturaUtc: T0 + HORA, cierreUtc: T0 + 2 * HORA });
     const saldo = crearCalculadorSaldo(datosCon([cerrada]));
-    expect(saldo('1', T0 + HORA)).toBe(10_000);
-    expect(saldo('1', T0 + 3 * HORA)).toBe(10_500);
-    expect(saldo('1', T0 - HORA)).toBe(0);
-    expect(saldo('otra', T0 + 3 * HORA)).toBe(0);
+    expect(saldo({ broker: 'B', cuenta: '1' }, T0 + HORA)).toBe(10_000);
+    expect(saldo({ broker: 'B', cuenta: '1' }, T0 + 3 * HORA)).toBe(10_500);
+    expect(saldo({ broker: 'B', cuenta: '1' }, T0 - HORA)).toBe(0);
+    expect(saldo({ broker: 'B', cuenta: 'otra' }, T0 + 3 * HORA)).toBe(0);
   });
 });
 
@@ -55,6 +55,12 @@ describe('crearClasificador', () => {
   it('el cierre manual es manual, salvo que el resultado sea casi nulo', () => {
     expect(clasificar(op('9', 300, 'manual'))).toBe('manual');
     expect(clasificar(op('10', 3, 'manual'))).toBe('break_even');
+  });
+
+  it('el saldo de otro broker no cuenta, aunque la cuenta se llame igual', () => {
+    const o = op('13', 3, 'sl');
+    const otroBroker = { cuenta: 'X', broker: 'Otro', utcMs: T0, importe: 10_000 } as never;
+    expect(crearClasificador({ operaciones: [o], movimientos: [otroBroker] }, CLASIFICACION_CIERRE)(o)).toBe('tp');
   });
 
   it('sin saldo conocido no hay break even', () => {

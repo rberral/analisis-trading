@@ -2,6 +2,7 @@
  * Saldo de la cuenta en el momento de abrir una operación: ingresos/retiradas hechos hasta
  * entonces más el resultado neto de las operaciones ya cerradas.
  */
+import { claveCuenta, type CuentaTrading } from '../../models/cuenta';
 import type { OperacionGuardada } from '../../models/operacion';
 import { netoDeOperacion } from '../estadisticas/calculadora-estadisticas';
 import type { DatosGuardados } from '../consultas/puertos';
@@ -11,15 +12,18 @@ interface Evento {
   readonly importe: number;
 }
 
-export type CalculadorSaldo = (cuenta: string, utcMs: number) => number;
+export type CalculadorSaldo = (cuenta: CuentaTrading, utcMs: number) => number;
 
 export function crearCalculadorSaldo(datos: DatosGuardados): CalculadorSaldo {
   const porCuenta = new Map<string, Evento[]>();
-  const anadir = (cuenta: string, evento: Evento) => porCuenta.set(cuenta, [...(porCuenta.get(cuenta) ?? []), evento]);
+  const anadir = (cuenta: CuentaTrading, evento: Evento) => {
+    const clave = claveCuenta(cuenta);
+    porCuenta.set(clave, [...(porCuenta.get(clave) ?? []), evento]);
+  };
 
-  for (const m of datos.movimientos) anadir(m.cuenta, { utcMs: m.utcMs, importe: m.importe });
+  for (const m of datos.movimientos) anadir(m, { utcMs: m.utcMs, importe: m.importe });
   for (const o of datos.operaciones) {
-    if (o.cierreUtc !== null) anadir(o.cuenta, { utcMs: o.cierreUtc, importe: netoOperacion(o) });
+    if (o.cierreUtc !== null) anadir(o, { utcMs: o.cierreUtc, importe: netoOperacion(o) });
   }
 
   // Eventos ordenados con saldo acumulado: cada consulta es una búsqueda binaria.
@@ -31,7 +35,7 @@ export function crearCalculadorSaldo(datos: DatosGuardados): CalculadorSaldo {
   }
 
   return (cuenta, utcMs) => {
-    const serie = acumulados.get(cuenta);
+    const serie = acumulados.get(claveCuenta(cuenta));
     if (!serie) return 0;
     let bajo = 0;
     let alto = serie.tiempos.length; // primer índice con tiempo > utcMs

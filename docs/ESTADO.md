@@ -26,8 +26,10 @@ Cambios tras las pruebas del usuario (12-nov): gráfico centrado y con 5 decimal
 6. Exportar a TradingView (12-nov): pantalla `/exportar` con filtros Periodo/Año/Activo/Cierre, selector de horas de las etiquetas, símbolo de TradingView por activo, un script Pine v6 por activo (plantilla adaptada de Load_Operativas_to_TD en `src/services/exportacion/plantilla-pine.ts`), partes de hasta 250 operaciones, datos en trozos de 3500 caracteres y manual. Timestamps en UTC absoluto (TradingView los muestra en la zona del gráfico); el desfase de las etiquetas va por operación. Validado con el validador de Pine de TradingView (sin errores). Pendiente: probarlo en un gráfico real.
 Regla de Break Even cambiada a la del proyecto de TradingView: |neto| < 0,1 % del saldo al abrir, con prioridad sobre Manual.
 
+7. Separación por broker + cuenta (12-nov): importar exige broker y admite nombre de cuenta; id de operación `broker:cuenta:ticket`; esquema IndexedDB v4; la barra de filtros elige una cuenta (no hay «todas»); el saldo al abrir y la clasificación van por cuenta. Los datos anteriores (sin broker) se agrupan como «Sin asignar»: se recomienda borrarlos y reimportar. Las velas no se separan por broker.
+
 ## Pendiente (hoja de ruta)
-7. Copia de seguridad (exportar/importar JSON).
+8. Copia de seguridad (exportar/importar JSON, con broker + cuenta) y 9. Borrar datos (todo o por broker/cuenta, con confirmación).
 
 Otros pendientes menores: lista de importaciones anteriores en Importar; resolver horas ambiguas/inexistentes por cambio de horario (hoy solo avisos); actualizar maquetas (quitar el correo de la cabecera, añadir Copia de seguridad).
 

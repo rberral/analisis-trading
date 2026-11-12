@@ -2,6 +2,7 @@ import { ESTRATEGIA, TEMPORALIDADES, UMBRALES_ERRORES } from '../config/app-conf
 import type { Aplicacion } from '../composicion';
 import { logger } from '../core/logger';
 import { analizarPeriodo, opcionesDelFiltro, type AnalisisPeriodo } from '../services/consultas/analisis-periodo';
+import { asegurarCuenta, listarCuentas } from '../services/consultas/cuentas';
 import type { DatosGuardados } from '../services/consultas/puertos';
 import type { VentanaVelas } from '../models/velas';
 import { crearPerfil } from '../services/analisis/perfil-estrategia';
@@ -50,9 +51,12 @@ function crearPaginaFiltrada(aplicacion: Aplicacion, titulo: string, dibujar: Di
       zonaContenido.firstElementChild?.append(crearElemento('a', { href: '#/importar', class: 'enlace' }, ['importar un informe']), '.');
       return;
     }
+    const cuentas = listarCuentas(datos);
+    aplicacion.filtro.fijar(asegurarCuenta(aplicacion.filtro.obtener(), cuentas));
     zonaBarra.replaceChildren(
       crearBarraFiltros({
-        opciones: opcionesDelFiltro(datos),
+        cuentas,
+        opcionesDe: (cuenta) => opcionesDelFiltro(datos, cuenta),
         filtro: aplicacion.filtro.obtener(),
         alCambiar: (filtro) => {
           aplicacion.filtro.fijar(filtro);

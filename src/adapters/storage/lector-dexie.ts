@@ -12,6 +12,8 @@ export class LectorDexie implements LectorDatos {
       this.baseDeDatos.table<OperacionGuardada, string>('operaciones').toArray(),
       this.baseDeDatos.table<MovimientoGuardado, string>('movimientos').toArray(),
     ]);
-    return { operaciones, movimientos };
+    // Datos guardados antes de separar por broker: se agrupan como «Sin asignar» para que no fallen las pantallas.
+    const conBroker = <T extends { broker?: string }>(fila: T): T & { broker: string } => ({ ...fila, broker: fila.broker ?? 'Sin asignar' });
+    return { operaciones: operaciones.map(conBroker), movimientos: movimientos.map(conBroker) };
   }
 }

@@ -26,7 +26,7 @@ export function crearClasificador(datos: DatosGuardados, parametros: ParametrosC
   return (operacion) => {
     if (operacion.cierreUtc === null) return null;
     const neto = netoOperacion(operacion);
-    const saldo = saldoEn(operacion.cuenta, operacion.aperturaUtc);
+    const saldo = saldoEn(operacion, operacion.aperturaUtc);
     if (saldo > 0 && (Math.abs(neto) / saldo) * 100 < parametros.umbralBreakEvenPorcentaje) return 'break_even';
     if (operacion.cierrePor === 'manual' || operacion.cierrePor === null) return 'manual';
     return neto > 0 ? 'tp' : 'sl';

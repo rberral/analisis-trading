@@ -7,6 +7,7 @@ export function crearOperacion(ticket: string, cambios: Partial<OperacionGuardad
   const aperturaUtc = cambios.aperturaUtc ?? Date.UTC(2026, 0, 5, 10);
   return {
     id: `1:${ticket}`,
+    broker: 'B',
     cuenta: '1',
     importacionId: 'imp',
     ticket,

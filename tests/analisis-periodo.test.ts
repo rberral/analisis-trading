@@ -5,7 +5,7 @@ import { analizarPeriodo, opcionesDelFiltro, type AnalisisPeriodo } from '../src
 import { crearOperacion } from './fixtures/operaciones';
 
 const deposito: MovimientoGuardado = {
-  id: '1:1', cuenta: '1', ticket: '1', descripcion: 'Depósito', importe: 1000,
+  id: 'B:1:1', broker: 'B', cuenta: '1', ticket: '1', descripcion: 'Depósito', importe: 1000,
   horaBroker: '2025-12-31T00:00:00', utcMs: Date.UTC(2025, 11, 31), importacionId: 'imp',
 };
 
@@ -55,6 +55,6 @@ describe('analizarPeriodo', () => {
 
 describe('opcionesDelFiltro', () => {
   it('lista activos, cuentas y años con cierres (años más recientes primero)', () => {
-    expect(opcionesDelFiltro(datos)).toEqual({ activos: ['EURUSD', 'XAUUSD'], cuentas: ['1'], anios: [2026] });
+    expect(opcionesDelFiltro(datos, null)).toEqual({ activos: ['EURUSD', 'XAUUSD'], anios: [2026] });
   });
 });

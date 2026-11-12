@@ -9,7 +9,7 @@ import { crearOperacion } from './fixtures/operaciones';
 
 const HORA = 3_600_000;
 const T0 = Date.UTC(2026, 0, 5, 10);
-const ingreso = { cuenta: '1', utcMs: T0 - HORA, importe: 10_000 } as never;
+const ingreso = { broker: 'B', cuenta: '1', utcMs: T0 - HORA, importe: 10_000 } as never;
 const parametros = {
   maximoOperacionesPorScript: 3,
   tamanoTrozo: EXPORTACION_TRADINGVIEW.tamanoTrozo,

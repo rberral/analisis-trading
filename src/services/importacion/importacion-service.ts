@@ -20,11 +20,15 @@ import { calcularBalanceInicial, validarTotales, type Comprobacion } from './val
 export interface OpcionesImportacion {
   readonly plataforma: Plataforma;
   readonly nombreFichero: string;
-  readonly broker: string | null;
+  /** Obligatorio. Broker y cuenta identifican de dónde vienen los datos. */
+  readonly broker: string;
+  /** Nombre de la cuenta; si va vacío se usa el número de cuenta del informe. */
+  readonly cuenta: string;
   readonly horario: HorarioBroker;
 }
 
 export interface ResultadoImportacion {
+  readonly broker: string;
   readonly cuenta: string;
   readonly nombreFichero: string;
   readonly nuevas: number;
@@ -50,6 +54,8 @@ export class ServicioImportacion {
   ) {}
 
   async importar(contenido: string, opciones: OpcionesImportacion): Promise<ResultadoImportacion> {
+    const broker = opciones.broker.trim();
+    if (broker === '') throw new ErrorDeUsuario('Indica el broker: separa los datos de cada broker y cuenta.');
     const errorHorario = validarHorario(opciones.horario);
     if (errorHorario) throw new ErrorDeUsuario(errorHorario);
 
@@ -68,12 +74,15 @@ export class ServicioImportacion {
       return convertida.utcMs;
     };
 
+    const cuenta = opciones.cuenta.trim() || informe.cuenta;
+    const propietaria = { broker, cuenta };
     const operaciones = [...informe.cerradas, ...informe.abiertas].map((operacion) =>
-      aOperacionGuardada(operacion, informe.cuenta, importacionId, aUtc),
+      aOperacionGuardada(operacion, propietaria, importacionId, aUtc),
     );
     const movimientos: MovimientoGuardado[] = informe.movimientos.map((movimiento) => ({
-      id: `${informe.cuenta}:${movimiento.ticket}`,
-      cuenta: informe.cuenta,
+      id: `${broker}:${cuenta}:${movimiento.ticket}`,
+      broker,
+      cuenta,
       ticket: movimiento.ticket,
       descripcion: movimiento.descripcion,
       importe: movimiento.importe,
@@ -104,10 +113,10 @@ export class ServicioImportacion {
     const fechaMs = Date.now();
     const importacion: RegistroImportacion = {
       id: importacionId,
-      cuenta: informe.cuenta,
+      broker,
+      cuenta,
       plataforma: opciones.plataforma,
       nombreFichero: opciones.nombreFichero,
-      broker: opciones.broker,
       horario: opciones.horario,
       fechaMs,
       nuevas,
@@ -121,7 +130,8 @@ export class ServicioImportacion {
       .map((operacion): InstantaneaAbierta => ({
         id: `${importacionId}:${operacion.ticket}`,
         importacionId,
-        cuenta: informe.cuenta,
+        broker,
+        cuenta,
         ticket: operacion.ticket,
         fechaMs,
         stopLoss: operacion.stopLoss,
@@ -133,7 +143,8 @@ export class ServicioImportacion {
     logger.info(`Importación terminada: ${nuevas} nuevas, ${yaExistentes} ya existentes`);
 
     return {
-      cuenta: informe.cuenta,
+      broker,
+      cuenta,
       nombreFichero: opciones.nombreFichero,
       nuevas,
       cerradasDesdeAbierta,
@@ -157,14 +168,15 @@ function comprobarTotales(informe: InformeParseado): Comprobacion[] {
 
 function aOperacionGuardada(
   operacion: OperacionInforme,
-  cuenta: string,
+  propietaria: { readonly broker: string; readonly cuenta: string },
   importacionId: string,
   aUtc: (hora: string, descripcion: string) => number,
 ): OperacionGuardada {
   return {
     ...operacion,
-    id: `${cuenta}:${operacion.ticket}`,
-    cuenta,
+    id: `${propietaria.broker}:${propietaria.cuenta}:${operacion.ticket}`,
+    broker: propietaria.broker,
+    cuenta: propietaria.cuenta,
     aperturaUtc: aUtc(operacion.aperturaBroker, `apertura de ${operacion.ticket}`),
     cierreUtc:
       operacion.cierreBroker === null ? null : aUtc(operacion.cierreBroker, `cierre de ${operacion.ticket}`),

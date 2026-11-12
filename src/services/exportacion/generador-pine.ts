@@ -71,7 +71,7 @@ function codificar(operacion: OperacionGuardada, entrada: EntradaExportacion): s
     numero(operacion.precioCierre),
     netoOperacion(operacion).toFixed(2),
     letraMotivo(operacion, entrada.analisis.clasificacion.get(operacion.id)),
-    entrada.saldoEn(operacion.cuenta, operacion.aperturaUtc).toFixed(2),
+    entrada.saldoEn(operacion, operacion.aperturaUtc).toFixed(2),
     minutos(operacion.aperturaUtc),
     cierre === null ? 0 : minutos(cierre),
   ].join(',');
