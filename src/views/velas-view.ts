@@ -89,11 +89,16 @@ function crearTablaCargas(cargas: readonly RegistroCargaVelas[], horas: Visualiz
       crearElemento('td', {}, [fechaHora(c.fechaMs, horas.modo === 'espana' ? horas.desfaseMs(c.fechaMs, null) : 0)]),
     ]),
   );
-  const columnas = ['Activo', 'Temporalidad', 'Fichero', 'Broker', `Rango (${horas.etiqueta})`, 'Operaciones con velas', 'Cargado'];
-  return crearElemento('div', { class: 'tabla-envoltorio' }, [
-    crearElemento('table', { class: 'tabla' }, [
-      crearElemento('thead', {}, [crearElemento('tr', {}, columnas.map((n) => crearElemento('th', {}, [n])))]),
-      crearElemento('tbody', {}, filas),
+  const columnas = ['Activo', 'Temporalidad', 'Fichero', 'Broker', `Rango (${horas.etiqueta})`, 'Operaciones con gráfico', 'Cargado'];
+  return crearElemento('div', {}, [
+    crearElemento('div', { class: 'tabla-envoltorio' }, [
+      crearElemento('table', { class: 'tabla' }, [
+        crearElemento('thead', {}, [crearElemento('tr', {}, columnas.map((n) => crearElemento('th', {}, [n])))]),
+        crearElemento('tbody', {}, filas),
+      ]),
+    ]),
+    crearElemento('p', { class: 'texto-suave' }, [
+      'Operaciones con gráfico: número de operaciones cuyo detalle dibuja su gráfico con las velas de este fichero. Si importas operaciones nuevas, vuelve a cargar el fichero para que también tengan gráfico.',
     ]),
   ]);
 }
