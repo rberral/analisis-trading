@@ -1,57 +1,35 @@
 /**
  * Clasifica cómo terminó cada operación según su resultado, no según la etiqueta de la plataforma.
- * MetaTrader marca como "stop loss" también los stops movidos a break even o a beneficio, y
- * eso hacía que operaciones ganadoras aparecieran como "Stop Loss".
+ * MetaTrader marca como "stop loss" también los stops movidos a break even o a beneficio.
  *
- *   - Cierre manual: siempre "manual".
- *   - Cierre automático (stop o take profit) con un resultado casi nulo: "break even".
- *   - Resto: "take profit" si ganó y "stop loss" si perdió.
- * "Casi nulo" = el movimiento de precio vale menos que cierto % del valor de la posición.
+ *   1. Break even: |resultado neto| menor que cierto % del saldo de la cuenta al abrir.
+ *      Tiene prioridad sobre el resto (una salida manual casi a cero también es break even).
+ *   2. Manual: la cerraste tú.
+ *   3. Take profit si ganó, stop loss si perdió.
+ * Es la misma regla que usa el script de TradingView, para que ambos coincidan.
  */
 import type { ClasificacionCierre } from '../../models/filtro';
 import type { OperacionGuardada } from '../../models/operacion';
+import type { DatosGuardados } from '../consultas/puertos';
+import { crearCalculadorSaldo, netoOperacion } from './saldo-apertura';
 
 export interface ParametrosClasificacion {
-  /** % del valor de la posición por debajo del cual el resultado cuenta como break even. */
+  /** % del saldo al abrir por debajo del cual el resultado neto cuenta como break even. */
   readonly umbralBreakEvenPorcentaje: number;
 }
 
 type Clasificador = (operacion: OperacionGuardada) => ClasificacionCierre | null;
 
-function mediana(valores: readonly number[]): number {
-  const ordenados = [...valores].sort((a, b) => a - b);
-  return ordenados[ordenados.length >> 1] ?? 0;
-}
-
-/**
- * Cuánto dinero vale mover el precio una unidad con un lote, por activo. El informe no trae el
- * tamaño del contrato, pero se deduce de las propias operaciones (beneficio / movimiento / lotes).
- */
-export function dineroPorUnidadDePrecio(operaciones: readonly OperacionGuardada[]): Map<string, number> {
-  const ratios = new Map<string, number[]>();
-  for (const operacion of operaciones) {
-    if (operacion.precioCierre === null) continue;
-    const movimiento = (operacion.tipo === 'compra' ? 1 : -1) * (operacion.precioCierre - operacion.precioEntrada);
-    if (Math.abs(movimiento) < 1e-9 || operacion.beneficio === 0 || operacion.lotes <= 0) continue;
-    const ratio = operacion.beneficio / (movimiento * operacion.lotes);
-    if (ratio > 0) ratios.set(operacion.activo, [...(ratios.get(operacion.activo) ?? []), ratio]);
-  }
-  return new Map([...ratios].map(([activo, lista]) => [activo, mediana(lista)]));
-}
-
-/** `todas` debe incluir todas las operaciones guardadas, no solo las filtradas, para deducir bien el contrato. */
-export function crearClasificador(todas: readonly OperacionGuardada[], parametros: ParametrosClasificacion): Clasificador {
-  const valorPorUnidad = dineroPorUnidadDePrecio(todas);
+/** `datos` debe incluir todo lo guardado, no solo lo filtrado, para que el saldo sea correcto. */
+export function crearClasificador(datos: DatosGuardados, parametros: ParametrosClasificacion): Clasificador {
+  const saldoEn = crearCalculadorSaldo(datos);
   return (operacion) => {
     if (operacion.cierreUtc === null) return null;
+    const neto = netoOperacion(operacion);
+    const saldo = saldoEn(operacion.cuenta, operacion.aperturaUtc);
+    if (saldo > 0 && (Math.abs(neto) / saldo) * 100 < parametros.umbralBreakEvenPorcentaje) return 'break_even';
     if (operacion.cierrePor === 'manual' || operacion.cierrePor === null) return 'manual';
-    const contrato = valorPorUnidad.get(operacion.activo);
-    if (contrato !== undefined) {
-      const valorPosicion = operacion.lotes * contrato * operacion.precioEntrada;
-      const porcentaje = (Math.abs(operacion.beneficio) / valorPosicion) * 100;
-      if (porcentaje < parametros.umbralBreakEvenPorcentaje) return 'break_even';
-    }
-    return operacion.beneficio > 0 ? 'tp' : 'sl';
+    return neto > 0 ? 'tp' : 'sl';
   };
 }
 

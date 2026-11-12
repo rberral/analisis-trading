@@ -16,11 +16,11 @@ export function crearNotaClasificacionCierre(): HTMLElement {
     crearElemento('summary', {}, ['Cómo se clasifica el tipo de cierre (Take profit, Stop loss, Break even, Manual)']),
     crearElemento('p', {}, ['La clasificación se hace por el resultado de la operación, no por la etiqueta de MetaTrader, que llama «stop loss» también a los stops movidos a break even o a beneficio.']),
     crearElemento('ul', {}, [
-      crearElemento('li', {}, [crearElemento('strong', {}, ['Manual: ']), 'la cerraste tú. Siempre es manual, aunque el resultado sea casi nulo.']),
       crearElemento('li', {}, [
         crearElemento('strong', {}, ['Break even: ']),
-        `cierre automático (stop o take profit) cuyo movimiento de precio vale menos del ${umbral} % del valor de la posición (lotes × tamaño del contrato × precio de entrada). Para el beneficio se usa el importe sin comisión ni swap.`,
+        `el resultado neto (con comisión y swap) vale menos del ${umbral} % del saldo de la cuenta al abrir la operación. Tiene prioridad: una salida manual casi a cero también es break even.`,
       ]),
+      crearElemento('li', {}, [crearElemento('strong', {}, ['Manual: ']), 'la cerraste tú (y no es break even).']),
       crearElemento('li', {}, [crearElemento('strong', {}, ['Take profit: ']), 'cierre automático con ganancia, aunque MetaTrader lo registre como stop loss (stop movido a beneficio).']),
       crearElemento('li', {}, [crearElemento('strong', {}, ['Stop loss: ']), 'cierre automático con pérdida.']),
     ]),
@@ -31,7 +31,7 @@ export function crearNotaClasificacionCierre(): HTMLElement {
       crearElemento('code', {}, ['CLASIFICACION_CIERRE']),
       ' (campo ',
       crearElemento('code', {}, ['umbralBreakEvenPorcentaje']),
-      `, ahora ${umbral}). Como referencia, en EURUSD el 0,01 % equivale a algo más de 1 pip. El tamaño del contrato de cada activo se deduce de tus propias operaciones.`,
+      `, ahora ${umbral}). El script de TradingView usa la misma regla.`,
     ]),
   ]);
 }

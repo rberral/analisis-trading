@@ -93,7 +93,7 @@ export function crearPaginaDetalle(aplicacion: Aplicacion, operacionId: string):
       crearElemento('h1', { class: 'titulo-pagina' }, ['Detalle de la operación']),
       crearNotaHoras(horas),
       ...controles,
-      crearTarjetaDatos(operacion, crearClasificador(datos.operaciones, CLASIFICACION_CIERRE)(operacion), horas),
+      crearTarjetaDatos(operacion, crearClasificador(datos, CLASIFICACION_CIERRE)(operacion), horas),
       zonaVelas,
     );
   }

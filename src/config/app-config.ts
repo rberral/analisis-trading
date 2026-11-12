@@ -173,12 +173,11 @@ export const COLORES_GRAFICO = {
 } as const;
 
 /**
- * Un cierre automático con un movimiento de precio menor que este % del valor de la posición
- * se considera break even. 0,01 % son unos 1,1 pips en EURUSD; con 0,1 % (11 pips) se mezclarían
- * pérdidas reales pequeñas con los break even.
+ * Una operación con |resultado neto| menor que este % del saldo de la cuenta al abrirla se considera
+ * break even. Es la misma regla que el script de TradingView (campo «% break even» de sus ajustes).
  */
 export const CLASIFICACION_CIERRE = {
-  umbralBreakEvenPorcentaje: 0.01,
+  umbralBreakEvenPorcentaje: 0.1,
 } as const;
 
 export interface OpcionHorario {

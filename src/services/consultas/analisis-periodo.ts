@@ -87,8 +87,8 @@ export function analizarPeriodo(datos: DatosGuardados, filtro: Filtro): Analisis
   const movimientos = datos.movimientos.filter((m) => deLaCuenta(m.cuenta));
   const deLActivo = (o: OperacionGuardada) => filtro.activo === null || o.activo === filtro.activo;
 
-  // El contrato de cada activo se deduce con todas las operaciones, no solo con las filtradas.
-  const clasificar = crearClasificador(datos.operaciones, CLASIFICACION_CIERRE);
+  // El saldo al abrir se calcula con todo lo guardado, no solo con lo filtrado.
+  const clasificar = crearClasificador(datos, CLASIFICACION_CIERRE);
   const cumpleCierre = (o: OperacionGuardada) => filtro.cierre === null || clasificar(o) === filtro.cierre;
 
   const operaciones = operacionesCuenta
