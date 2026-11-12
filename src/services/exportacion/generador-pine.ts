@@ -2,7 +2,7 @@
  * Convierte las operaciones filtradas en scripts Pine para TradingView: uno por activo y,
  * si superan el límite de dibujos de Pine, varios (parte 1 de N…).
  */
-import type { ClasificacionCierre, Filtro } from '../../models/filtro';
+import type { ClasificacionCierre, Filtro, Periodo } from '../../models/filtro';
 import type { OperacionGuardada } from '../../models/operacion';
 import { netoOperacion, type CalculadorSaldo } from '../analisis/saldo-apertura';
 import type { AnalisisPeriodo } from '../consultas/analisis-periodo';
@@ -33,8 +33,8 @@ export interface EntradaExportacion {
   readonly horas: VisualizadorHoras;
   /** Nombre en TradingView de cada activo (los que falten usan el del broker). */
   readonly simbolos: Readonly<Record<string, string>>;
-  /** Texto corto de los filtros, para la cabecera del script. */
-  readonly descripcionFiltros: string;
+  /** Filtro aplicado: da el nombre del fichero y la cabecera del script. */
+  readonly filtro: Filtro;
 }
 
 const MS_POR_MINUTO = 60_000;
@@ -109,6 +109,26 @@ function nombreSeguro(texto: string): string {
   return texto.replace(/[^A-Za-z0-9_-]+/g, '_');
 }
 
+const SUFIJO_CIERRE: Record<ClasificacionCierre, string> = { tp: 'TP', sl: 'SL', break_even: 'BE', manual: 'Manual' };
+
+/** «Total», «2026», «2026-T1», «2026-03» o «2026-01-01_2026-03-15». */
+export function nombreDePeriodo(periodo: Periodo): string {
+  switch (periodo.tipo) {
+    case 'total': return 'Total';
+    case 'anio': return String(periodo.anio);
+    case 'trimestre': return `${periodo.anio}-T${periodo.trimestre}`;
+    case 'mes': return `${periodo.anio}-${String(periodo.mes).padStart(2, '0')}`;
+    case 'rango': return `${periodo.desde}_${periodo.hasta}`;
+  }
+}
+
+/** PERIODO_ACTIVO.pine; añade el tipo de cierre si se filtró y «_parteXdeN» si hay varias partes. */
+export function nombreDeFichero(filtro: Filtro, simbolo: string, parte: number, partes: number): string {
+  const cierre = filtro.cierre === null ? '' : `_${SUFIJO_CIERRE[filtro.cierre]}`;
+  const sufijoParte = partes > 1 ? `_parte${parte}de${partes}` : '';
+  return `${nombreSeguro(nombreDePeriodo(filtro.periodo))}_${nombreSeguro(simbolo)}${cierre}${sufijoParte}.pine`;
+}
+
 function crearScript(
   activo: string,
   simbolo: string,
@@ -129,7 +149,7 @@ function crearScript(
     TOTAL: String(operaciones.length),
     PARTE: textoParte,
     PARTE_CORTA: partes > 1 ? `${parte}/${partes}` : 'operaciones',
-    FILTROS: entrada.descripcionFiltros,
+    FILTROS: describirFiltro(entrada.filtro),
     ETIQUETA_HORA: entrada.horas.etiqueta,
     MAX_OPERACIONES: String(parametros.maximoOperacionesPorScript),
     PCT_BE: String(parametros.umbralBreakEvenPorcentaje),
@@ -137,9 +157,8 @@ function crearScript(
     DATOS: lineasDatos,
     NOMBRES_TROZOS: nombresTrozos,
   });
-  const sufijo = partes > 1 ? `_parte${parte}de${partes}` : '';
   return {
-    nombreFichero: `diario_${nombreSeguro(simbolo)}${sufijo}.pine`,
+    nombreFichero: nombreDeFichero(entrada.filtro, simbolo, parte, partes),
     activo,
     simboloTradingView: simbolo,
     parte,

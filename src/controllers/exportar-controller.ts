@@ -6,7 +6,7 @@ import type { ModoHora } from '../models/visualizacion';
 import { crearCalculadorSaldo } from '../services/analisis/saldo-apertura';
 import { analizarPeriodo, opcionesDelFiltro } from '../services/consultas/analisis-periodo';
 import type { DatosGuardados } from '../services/consultas/puertos';
-import { describirFiltro, generarScriptsPine, agruparPorActivo } from '../services/exportacion/generador-pine';
+import { generarScriptsPine, agruparPorActivo } from '../services/exportacion/generador-pine';
 import { crearVisualizador } from '../services/visualizacion/visualizador-horas';
 import { crearElemento } from '../views/dom';
 import { crearCamposSimbolos, crearManual, crearResultado, crearSelectorHoras } from '../views/exportar-view';
@@ -94,7 +94,7 @@ function mostrarResultado(
       saldoEn: crearCalculadorSaldo(datos),
       horas: crearVisualizador(modo, horarios, VISUALIZACION_HORAS),
       simbolos,
-      descripcionFiltros: describirFiltro(filtro),
+      filtro,
     },
     { ...EXPORTACION_TRADINGVIEW, umbralBreakEvenPorcentaje: CLASIFICACION_CIERRE.umbralBreakEvenPorcentaje },
   );

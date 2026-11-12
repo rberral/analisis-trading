@@ -68,10 +68,15 @@ Para probar la versión de producción (con la política de seguridad activa) en
 
 Todas las horas se guardan en **UTC**: al importar un informe o cargar velas se convierten con el horario del servidor del broker que eliges. En el menú lateral, **Mostrar horas en** permite verlas en UTC (por defecto), en hora del broker (como en MetaTrader) o en hora de España; solo cambia la visualización y la elección se recuerda en el navegador. Los periodos de los filtros siempre se cuentan en UTC.
 
+## Sobre la aplicación
+
+La sección **Sobre la aplicación** del menú explica, para quien la ve por primera vez, qué hace cada apartado y en qué orden usarlos.
+
 ## Exportar a TradingView
 
 La pantalla **Exportar a TradingView** usa los mismos filtros (periodo, año, activo, cierre) y genera un script Pine v6 por activo, que dibuja cada operación (zonas de TP y SL, entrada, SL movido, salida y tabla de estadísticas). Pasos: elige filtros, ajusta el nombre del activo en TradingView si difiere (p. ej. SP500 → SPX), descarga el `.pine`, pégalo en el Editor de Pine del gráfico de ese activo y pulsa «Añadir al gráfico».
 
+- **Nombre del fichero:** `PERIODO_ACTIVO.pine` (`Total`, `2026`, `2026-T1`, `2026-03` o `2026-01-01_2026-03-15`); si filtras por cierre se añade `_TP`, `_SL`, `_BE` o `_Manual`, y `_parteXdeN` si hay varias partes.
 - **Límite:** Pine admite 500 cajas/líneas/etiquetas por script; con 2 de cada por operación caben 250 (`EXPORTACION_TRADINGVIEW` en la configuración). Si un activo tiene más, se reparte en partes (parte 1 de N…) que se añaden como indicadores distintos.
 - **Horas:** el script lleva marcas de tiempo UTC absolutas, así que las operaciones caen siempre en su vela; el eje horario lo decide TradingView (Ajustes del gráfico → Zona horaria). «Horas de las etiquetas» solo cambia los textos de los tooltips (UTC, hora del broker u hora de España).
 - **Precios:** son los de tu broker; el gráfico de TradingView puede diferir unos pips.

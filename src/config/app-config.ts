@@ -54,6 +54,11 @@ export const SECCIONES: readonly Seccion[] = [
     titulo: 'Copia de seguridad',
     descripcion: 'Exportar e importar todos tus datos, que viven solo en este navegador.',
   },
+  {
+    ruta: '/sobre',
+    titulo: 'Sobre la aplicación',
+    descripcion: 'Qué hace la aplicación, cómo funciona cada apartado y en qué orden usarlos.',
+  },
 ];
 
 export interface OpcionPlataforma {
