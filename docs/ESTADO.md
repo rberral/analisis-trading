@@ -45,3 +45,6 @@ Otros pendientes menores: lista de importaciones anteriores en Importar; resolve
 
 ## Cómo probar en local
 `npm install`, `npm test`, `npm run dev`. No subas informes reales al repositorio (es público): los tests usan `tests/fixtures/informe-mt4.ts`.
+
+## 12. Exportar: generación bajo demanda
+La pantalla Exportar no calcula nada al abrirse ni al cambiar opciones: los scripts Pine se generan solo al pulsar «Generar script». Si se cambia un filtro, la hora o un símbolo, el resultado anterior se retira y se pide generar de nuevo.

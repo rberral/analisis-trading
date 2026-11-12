@@ -57,11 +57,18 @@ export function crearResultado(scripts: readonly ScriptPine[], alDescargar: (scr
   ]);
 }
 
+/** Botón que lanza el cálculo de los scripts; hasta pulsarlo no se genera nada. */
+export function crearBotonGenerar(alPulsar: () => void): HTMLElement {
+  const boton = crearElemento('button', { type: 'button', class: 'boton' }, ['Generar script']);
+  boton.addEventListener('click', alPulsar);
+  return crearElemento('div', { class: 'fila-exportar' }, [boton]);
+}
+
 export function crearManual(): HTMLElement {
   return crearElemento('details', { class: 'tarjeta nota-desplegable' }, [
     crearElemento('summary', {}, ['Cómo usar los scripts en TradingView']),
     crearElemento('ol', {}, [
-      crearElemento('li', {}, ['Descarga el script del activo (cada fichero es de un solo activo).']),
+      crearElemento('li', {}, ['Elige los filtros y pulsa «Generar script»; después descarga el script del activo (cada fichero es de un solo activo).']),
       crearElemento('li', {}, ['En TradingView abre el gráfico de ese activo y, abajo, el «Editor de Pine».']),
       crearElemento('li', {}, ['Borra el contenido, pega el script, y pulsa «Añadir al gráfico».']),
       crearElemento('li', {}, ['Si hay varias partes, repite el proceso con cada una: cada parte es un indicador distinto.']),
