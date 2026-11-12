@@ -3,8 +3,11 @@ import type { AlcanceBorrado, ResumenDatos, ResultadoImportacionCopia } from '..
 import { crearElemento } from './dom';
 import { entero } from './formato';
 
+/** Valor del desplegable de borrado para «solo las velas». */
+const VELAS = '__velas__';
+
 export function crearTarjetaResumen(resumen: ResumenDatos): HTMLElement {
-  if (resumen.operaciones === 0) {
+  if (!resumen.hayDatos) {
     return crearElemento('section', { class: 'tarjeta' }, [
       crearElemento('h2', {}, ['Datos guardados']),
       crearElemento('p', {}, ['Todavía no hay datos guardados en este navegador.']),
@@ -12,7 +15,7 @@ export function crearTarjetaResumen(resumen: ResumenDatos): HTMLElement {
   }
   return crearElemento('section', { class: 'tarjeta' }, [
     crearElemento('h2', {}, ['Datos guardados en este navegador']),
-    crearElemento('p', {}, [`${entero(resumen.operaciones)} operaciones, ${entero(resumen.importaciones)} importaciones y ${entero(resumen.ventanasVelas)} ventanas de velas.`]),
+    crearElemento('p', {}, [`${entero(resumen.operaciones)} operaciones, ${entero(resumen.importaciones)} importaciones, ${entero(resumen.ventanasVelas)} ventanas de velas y ${entero(resumen.cargasVelas)} ficheros de velas cargados.`]),
     crearElemento('ul', {}, resumen.cuentas.map((c) => crearElemento('li', {}, [`${textoCuenta(c.cuenta)}: ${entero(c.operaciones)} operaciones`]))),
   ]);
 }
@@ -69,11 +72,12 @@ export function crearTarjetaImportar(alImportar: (fichero: File) => void): Tarje
 }
 
 export function crearTarjetaBorrar(resumen: ResumenDatos, palabra: string, alBorrar: (alcance: AlcanceBorrado) => void, alExportar: () => void): HTMLElement {
-  if (resumen.operaciones === 0) {
+  if (!resumen.hayDatos) {
     return crearElemento('section', { class: 'tarjeta' }, [crearElemento('h2', {}, ['Borrar datos']), crearElemento('p', {}, ['No hay datos que borrar.'])]);
   }
   const selector = crearElemento('select', { name: 'Qué borrar', 'aria-label': 'Qué borrar' }) as HTMLSelectElement;
   selector.append(crearElemento('option', { value: '' }, ['Todos los datos']));
+  selector.append(crearElemento('option', { value: VELAS }, ['Solo las velas (ficheros cargados y velas de las operaciones)']));
   for (const c of resumen.cuentas) selector.append(crearElemento('option', { value: claveCuenta(c.cuenta) }, [`Solo ${textoCuenta(c.cuenta)}`]));
 
   const campo = crearElemento('input', { type: 'text', name: 'confirmacion', autocomplete: 'off', placeholder: palabra }) as HTMLInputElement;
@@ -84,7 +88,8 @@ export function crearTarjetaBorrar(resumen: ResumenDatos, palabra: string, alBor
   boton.addEventListener('click', () => {
     if (campo.value.trim() !== palabra) return;
     const elegida = resumen.cuentas.find((c) => claveCuenta(c.cuenta) === selector.value);
-    alBorrar(elegida ? { tipo: 'cuenta', cuenta: elegida.cuenta } : { tipo: 'todo' });
+    if (selector.value === VELAS) alBorrar({ tipo: 'velas' });
+    else alBorrar(elegida ? { tipo: 'cuenta', cuenta: elegida.cuenta } : { tipo: 'todo' });
   });
   const exportar = crearElemento('button', { type: 'button', class: 'boton' }, ['Descargar copia antes de borrar']);
   exportar.addEventListener('click', alExportar);
@@ -92,7 +97,7 @@ export function crearTarjetaBorrar(resumen: ResumenDatos, palabra: string, alBor
   return crearElemento('section', { class: 'tarjeta' }, [
     crearElemento('h2', {}, ['Borrar datos']),
     crearElemento('p', { class: 'aviso aviso--atencion' }, ['Esto elimina los datos guardados en este navegador y no se puede deshacer. Si quieres conservarlos, descarga antes una copia de seguridad.']),
-    crearElemento('p', {}, ['Al borrar todo se eliminan operaciones, importaciones, velas y brokers. Al borrar una cuenta se conservan las demás y los ficheros de velas cargados. Los ajustes de pantalla (como «Mostrar horas en») se mantienen.']),
+    crearElemento('p', {}, ['Al borrar todo se eliminan operaciones, importaciones, velas (incluidos los ficheros de velas cargados) y brokers. «Solo las velas» borra únicamente las velas. Al borrar una cuenta se conservan las demás y los ficheros de velas cargados (no pertenecen a un broker). Los ajustes de pantalla (como «Mostrar horas en») se mantienen.']),
     exportar,
     crearElemento('label', { class: 'campo campo--filtro' }, ['Qué borrar', selector]),
     crearElemento('label', { class: 'campo campo--filtro' }, [`Escribe ${palabra} para confirmar`, campo]),

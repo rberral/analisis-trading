@@ -34,7 +34,9 @@ export function crearPaginaCopia(aplicacion: Aplicacion): HTMLElement {
         (alcance) => void ejecutar(async () => {
           await servicio.borrar(alcance);
           await refrescar();
-          mensaje(alcance.tipo === 'todo' ? 'Todos los datos se han borrado.' : 'Los datos de esa cuenta se han borrado.');
+          mensaje(
+            alcance.tipo === 'todo' ? 'Todos los datos se han borrado.' : alcance.tipo === 'velas' ? 'Las velas se han borrado.' : 'Los datos de esa cuenta se han borrado.',
+          );
         }),
         () => void ejecutar(exportar),
       ),

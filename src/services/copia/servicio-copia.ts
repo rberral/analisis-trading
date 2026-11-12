@@ -22,6 +22,10 @@ export interface ResumenDatos {
   readonly operaciones: number;
   readonly importaciones: number;
   readonly ventanasVelas: number;
+  /** Ficheros de velas cargados. */
+  readonly cargasVelas: number;
+  /** Hay algo guardado en cualquier tabla (aunque ya no queden operaciones). */
+  readonly hayDatos: boolean;
   readonly cuentas: ReadonlyArray<{ readonly cuenta: CuentaTrading; readonly operaciones: number }>;
 }
 
@@ -31,7 +35,7 @@ export interface ResultadoImportacionCopia {
   readonly operacionesNuevas: number;
 }
 
-export type AlcanceBorrado = { readonly tipo: 'todo' } | { readonly tipo: 'cuenta'; readonly cuenta: CuentaTrading };
+export type AlcanceBorrado = { readonly tipo: 'todo' } | { readonly tipo: 'velas' } | { readonly tipo: 'cuenta'; readonly cuenta: CuentaTrading };
 
 const esObjeto = (valor: unknown): valor is Record<string, unknown> => typeof valor === 'object' && valor !== null && !Array.isArray(valor);
 
@@ -54,6 +58,8 @@ export class ServicioCopia {
       operaciones: tablas.operaciones.length,
       importaciones: tablas.importaciones.length,
       ventanasVelas: tablas.ventanasVelas.length,
+      cargasVelas: tablas.cargasVelas.length,
+      hayDatos: NOMBRES_TABLAS.some((nombre) => tablas[nombre].length > 0),
       cuentas,
     };
   }
@@ -79,6 +85,13 @@ export class ServicioCopia {
   async borrar(alcance: AlcanceBorrado): Promise<void> {
     if (alcance.tipo === 'todo') {
       await this.almacen.vaciarTodo();
+      return;
+    }
+    if (alcance.tipo === 'velas') {
+      // Solo las velas: los ficheros cargados y las ventanas de velas de cada operación.
+      const velas = await this.almacen.leerTablas();
+      await this.almacen.eliminar('ventanasVelas', velas.ventanasVelas.map((v) => v.id));
+      await this.almacen.eliminar('cargasVelas', velas.cargasVelas.map((c) => c.id));
       return;
     }
     const tablas = await this.almacen.leerTablas();

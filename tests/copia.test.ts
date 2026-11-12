@@ -86,6 +86,27 @@ describe('ServicioCopia', () => {
     expect(almacen.tablas.cargasVelas).toHaveLength(1);
   });
 
+  it('borrar solo las velas deja operaciones y brokers', async () => {
+    const { almacen, servicio } = crear();
+    await servicio.borrar({ tipo: 'velas' });
+    expect(almacen.tablas.ventanasVelas).toHaveLength(0);
+    expect(almacen.tablas.cargasVelas).toHaveLength(0);
+    expect(almacen.tablas.operaciones).toHaveLength(3);
+  });
+
+  it('con solo velas guardadas sigue habiendo datos que borrar', async () => {
+    const { almacen, servicio } = crear();
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'A', cuenta: '1' } });
+    await servicio.borrar({ tipo: 'cuenta', cuenta: { broker: 'B', cuenta: '2' } });
+    const r = await servicio.resumen();
+    expect(r.operaciones).toBe(0);
+    expect(r.cargasVelas).toBe(1);
+    expect(r.hayDatos).toBe(true);
+    await servicio.borrar({ tipo: 'todo' });
+    expect((await servicio.resumen()).hayDatos).toBe(false);
+    expect(almacen.tablas.cargasVelas).toHaveLength(0);
+  });
+
   it('borrar todo vacía las tablas', async () => {
     const { almacen, servicio } = crear();
     await servicio.borrar({ tipo: 'todo' });
