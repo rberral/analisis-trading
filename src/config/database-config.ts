@@ -33,5 +33,13 @@ export const BASE_DE_DATOS_CONFIG = {
         instantaneasAbiertas: 'id, importacionId, [cuenta+ticket]',
       },
     },
+    {
+      version: 3,
+      tablas: {
+        // Solo las velas de cada operación (no el fichero entero) y qué ficheros se cargaron.
+        ventanasVelas: 'id, operacionId, activo, cargaId',
+        cargasVelas: 'id, activo, fechaMs',
+      },
+    },
   ] as readonly VersionEsquema[],
 } as const;

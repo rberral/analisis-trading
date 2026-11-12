@@ -1,18 +1,9 @@
 import { PLATAFORMAS } from '../config/app-config';
 import { ErrorDeUsuario } from '../core/errores';
-import type { HorarioBroker } from '../core/horario';
 import { logger } from '../core/logger';
 import type { ServicioImportacion } from '../services/importacion/importacion-service';
+import { construirHorario } from './horario-controller';
 import { crearVistaImportar, type DatosFormularioImportacion } from '../views/importar-view';
-
-function construirHorario(datos: DatosFormularioImportacion): HorarioBroker {
-  if (datos.tipoHorario === 'zona') return { tipo: 'zona', zona: datos.zona };
-  if (datos.tipoHorario === 'nueva_york_mas') {
-    const horas = datos.horas.trim() === '' ? Number.NaN : Number(datos.horas);
-    return { tipo: 'nueva_york_mas', horas };
-  }
-  throw new ErrorDeUsuario('Indica el horario del servidor del broker: es obligatorio.');
-}
 
 /** Pantalla de importación. Recoge los datos del formulario y llama al servicio; no calcula nada. */
 export function crearPaginaImportar(servicio: ServicioImportacion): HTMLElement {

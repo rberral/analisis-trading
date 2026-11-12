@@ -325,3 +325,14 @@ select {
   background: var(--activo);
   border-radius: 6px;
 }
+
+/* Fase 4: velas */
+.subtitulo-pagina {
+  margin: 24px 0 8px;
+  font-size: 18px;
+}
+
+.fila-destacada {
+  background: var(--activo);
+  font-weight: 600;
+}

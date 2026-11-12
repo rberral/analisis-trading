@@ -6,6 +6,7 @@
  * se escriba aquí es público, así que nunca se deben añadir claves ni contraseñas.
  */
 import type { Plataforma } from '../models/importacion';
+import type { Temporalidad } from '../models/velas';
 
 export interface Seccion {
   /** Ruta dentro de la web (se usa tras el # de la dirección). */
@@ -101,4 +102,36 @@ export const UMBRALES_ERRORES = {
   duracionPerdedorasSobreGanadoras: 2,
   /** Mínimo de operaciones de cada tipo para comparar duraciones. */
   minimoParaDuraciones: 5,
+} as const;
+
+export interface OpcionTemporalidad {
+  readonly valor: Temporalidad;
+  readonly nombre: string;
+  readonly minutos: number;
+}
+
+export const TEMPORALIDADES: readonly OpcionTemporalidad[] = [
+  { valor: 'M1', nombre: '1 minuto', minutos: 1 },
+  { valor: 'M5', nombre: '5 minutos', minutos: 5 },
+  { valor: 'M15', nombre: '15 minutos', minutos: 15 },
+  { valor: 'M30', nombre: '30 minutos', minutos: 30 },
+  { valor: 'H1', nombre: '1 hora', minutos: 60 },
+  { valor: 'H4', nombre: '4 horas', minutos: 240 },
+  { valor: 'D1', nombre: 'Diario', minutos: 1440 },
+];
+
+/** Parámetros de la carga de velas y de la comprobación del horario del broker. */
+export const VELAS = {
+  /** Velas guardadas antes de la entrada y después de la salida de cada operación. */
+  margenVelas: 20,
+  /** Tope de velas por operación; si se supera se recorta y se marca la ventana como truncada. */
+  maximoVelasPorVentana: 3000,
+  /** Un precio "está dentro" de una vela si no se sale de ella más de esta fracción del precio (cubre el spread). */
+  toleranciaPrecio: 0.0002,
+  /** Desfases (en horas) que se prueban para ver si el horario declarado es el que mejor encaja. */
+  desfasesHoras: [-3, -2, -1, 0, 1, 2, 3],
+  /** Con menos precios que comprobar, la comprobación no es concluyente. */
+  minimoComprobaciones: 10,
+  /** Porcentaje de precios que deben encajar para dar el horario por correcto. */
+  porcentajeMinimoCorrecto: 90,
 } as const;

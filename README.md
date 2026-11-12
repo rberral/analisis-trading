@@ -48,6 +48,12 @@ El fichero no se guarda: se lee, se importa y se descarta. Los datos quedan en e
 
 Las pruebas usan un informe inventado (`tests/fixtures/informe-mt4.ts`); no subas informes reales al repositorio.
 
+## Velas y ficheros (MetaTrader 4)
+
+En **Velas y ficheros** cargas el CSV de velas que exporta MetaTrader 4 (Centro de historial). Hay que indicar el activo, la temporalidad y el horario del servidor del broker (obligatorio; el broker es opcional). Antes de guardar, la aplicación comprueba que el horario es el correcto: mira si el precio de entrada y de salida de tus operaciones está dentro de la vela de ese momento y lo repite con desfases de -3 a +3 horas, para que veas cuál encaja mejor. No corrige nada sola.
+
+El fichero de velas **no se guarda**: solo se conservan, para cada operación cerrada, las velas de su duración más 20 antes y 20 después (como máximo 3 000). Los parámetros están en `VELAS` (`src/config/app-config.ts`).
+
 ## Panel, Operaciones y Errores
 
 Las tres pantallas comparten una barra de filtros: periodo (total, año, trimestre, mes o rango de fechas), activo y, si hay varias, cuenta. Los periodos se cuentan en UTC según la hora de **cierre** de la operación, y el drawdown se calcula dentro del periodo elegido, partiendo del balance que había al empezar.

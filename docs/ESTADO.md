@@ -1,6 +1,6 @@
 # Estado del proyecto (para retomarlo)
 
-Última actualización: 2026-11-11
+Última actualización: 2026-11-12
 
 ## Qué es
 Diario de trading: web estática (TypeScript + Vite, sin framework; Dexie, Lightweight Charts, Vitest) publicada en GitHub Pages. Sin roles ni permisos. Los datos viven en el navegador (IndexedDB) de cada usuario. Los ficheros subidos no se guardan.
@@ -18,8 +18,9 @@ Diario de trading: web estática (TypeScript + Vite, sin framework; Dexie, Light
 2. Importar informe MT4 con validación de totales (las 25 cifras coinciden con el informe real).
 3. Panel, Operaciones y Errores y consejos, con filtros por periodo, activo y cuenta. Errores solo con el informe: sin stop loss, aperturas erróneas (sin SL cerradas en < 5 min), pérdidas desproporcionadas, subir lotes tras perder, sobreoperación, perdedoras más largas que ganadoras. Umbrales en `src/config/app-config.ts`.
 
+4. Velas: carga del CSV de MT4 (activo, temporalidad, horario, broker opcional), comprobación del horario con desfases -3..+3 h (no corrige sola), y guardado solo de las ventanas de velas por operación cerrada (IndexedDB v3). Pantalla «Velas y ficheros» con la lista de cargas.
+
 ## Pendiente (hoja de ruta)
-4. Velas: carga de CSV (activo, temporalidad, horario UTC, broker), comprobación del horario, ventanas de velas por operación.
 5. Detalle de operación, MAE/MFE, salidas anticipadas, detección de estrategia.
 6. Exportar a TradingView (Pine Script, límite ≈500 objetos de dibujo, mapeo de símbolos, manual).
 7. Copia de seguridad (exportar/importar JSON).

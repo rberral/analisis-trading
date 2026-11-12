@@ -3,14 +3,12 @@ import type { Plataforma } from '../models/importacion';
 import type { ResultadoImportacion } from '../services/importacion/importacion-service';
 import type { Comprobacion } from '../services/importacion/validador-totales';
 import { crearElemento } from './dom';
+import { crearCampoHorario, type DatosHorario } from './horario-campo-view';
 
-export interface DatosFormularioImportacion {
+export interface DatosFormularioImportacion extends DatosHorario {
   readonly plataforma: Plataforma;
   readonly fichero: File | null;
   readonly broker: string;
-  readonly tipoHorario: 'zona' | 'nueva_york_mas' | null;
-  readonly zona: string;
-  readonly horas: string;
 }
 
 export interface VistaImportar {
@@ -34,14 +32,6 @@ function campo(etiqueta: string, control: HTMLElement): HTMLElement {
 
 function crearControl<T extends HTMLElement>(etiqueta: string, atributos: Record<string, string>): T {
   return crearElemento(etiqueta, atributos) as T;
-}
-
-function crearOpcionHorario(valor: string, texto: string, control: HTMLElement): HTMLElement {
-  const radio = crearElemento('input', { type: 'radio', name: 'horario', value: valor });
-  return crearElemento('div', { class: 'opcion-horario' }, [
-    crearElemento('label', { class: 'opcion-horario__radio' }, [radio, texto]),
-    control,
-  ]);
 }
 
 function crearTarjetaCifra(valor: number, texto: string): HTMLElement {
@@ -101,21 +91,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
   }
   const campoFichero = crearControl<HTMLInputElement>('input', { type: 'file', name: 'fichero', accept: '.htm,.html' });
   const campoBroker = crearControl<HTMLInputElement>('input', { type: 'text', name: 'broker', placeholder: 'Nombre del broker' });
-  const campoZona = crearControl<HTMLInputElement>('input', {
-    type: 'text',
-    name: 'zona',
-    placeholder: 'Europe/Athens',
-    'aria-label': 'Nombre de la zona horaria',
-  });
-  const campoHoras = crearControl<HTMLInputElement>('input', {
-    type: 'number',
-    name: 'horas',
-    step: '1',
-    placeholder: '7',
-    'aria-label': 'Horas de diferencia con Nueva York',
-  });
-  const opcionZona = crearOpcionHorario('zona', 'Zona horaria con nombre', campoZona);
-  const opcionNuevaYork = crearOpcionHorario('nueva_york_mas', 'Regla «Nueva York + N horas»', campoHoras);
+  const campoHorario = crearCampoHorario();
 
   const botonEnviar = crearControl<HTMLButtonElement>('button', { type: 'submit', class: 'boton' });
   botonEnviar.append('Importar y validar');
@@ -125,14 +101,7 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
     campo('Plataforma', selectorPlataforma),
     campo('Fichero del informe', campoFichero),
     campo('Broker (opcional)', campoBroker),
-    crearElemento('fieldset', { class: 'grupo' }, [
-      crearElemento('legend', {}, ['Horario del servidor del broker (obligatorio)']),
-      opcionZona,
-      opcionNuevaYork,
-      crearElemento('p', { class: 'texto-suave' }, [
-        'No hay valor por defecto: el informe no incluye la zona horaria y la aplicación no la deduce.',
-      ]),
-    ]),
+    campoHorario.elemento,
     crearElemento('p', { class: 'texto-suave' }, ['El fichero no se guarda: se lee, se importa y se descarta.']),
     botonEnviar,
   ]);
@@ -141,14 +110,11 @@ export function crearVistaImportar(opciones: OpcionesVista): VistaImportar {
 
   formulario.addEventListener('submit', (evento) => {
     evento.preventDefault();
-    const seleccionado = formulario.querySelector<HTMLInputElement>('input[name="horario"]:checked');
     opciones.alEnviar({
       plataforma: selectorPlataforma.value as Plataforma,
       fichero: campoFichero.files?.[0] ?? null,
       broker: campoBroker.value,
-      tipoHorario: seleccionado ? (seleccionado.value as 'zona' | 'nueva_york_mas') : null,
-      zona: campoZona.value,
-      horas: campoHoras.value,
+      ...campoHorario.leer(),
     });
   });
 

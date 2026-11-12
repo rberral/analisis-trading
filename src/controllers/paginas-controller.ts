@@ -4,6 +4,7 @@ import { crearPaginaNoEncontrada, crearPaginaPendiente } from '../views/pagina-v
 import { renderizarLayout } from '../views/layout-view';
 import { crearPaginaErrores, crearPaginaOperaciones, crearPaginaPanel } from './analisis-controller';
 import { crearPaginaImportar } from './importar-controller';
+import { crearPaginaVelas } from './velas-controller';
 
 type FabricaDePagina = (aplicacion: Aplicacion, seccion: Seccion) => HTMLElement;
 
@@ -12,6 +13,7 @@ const PAGINAS: Readonly<Record<string, FabricaDePagina>> = {
   '/': (aplicacion) => crearPaginaPanel(aplicacion),
   '/operaciones': (aplicacion) => crearPaginaOperaciones(aplicacion),
   '/errores': (aplicacion) => crearPaginaErrores(aplicacion),
+  '/velas': (aplicacion) => crearPaginaVelas(aplicacion),
   '/importar': (aplicacion) => crearPaginaImportar(aplicacion.servicioImportacion),
 };
 
