@@ -330,6 +330,40 @@ select {
   stroke-linejoin: round;
 }
 
+.curva__contenedor {
+  position: relative;
+}
+
+.curva__guia {
+  stroke: var(--texto-suave);
+  stroke-width: 1;
+}
+
+.curva__marca {
+  fill: var(--enlace);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+/* Etiqueta que sigue al puntero: colocada arriba del gráfico y sin interceptar el ratón. */
+.curva__etiqueta {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.curva {
+  touch-action: pan-y;
+}
+
 .curva__base {
   stroke: var(--borde);
   stroke-width: 1;

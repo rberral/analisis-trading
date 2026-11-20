@@ -19,6 +19,63 @@ const ANCHO = 640;
 const ALTO = 220;
 const MARGEN = 8;
 
+interface ElementosCurva {
+  readonly dibujo: SVGElement;
+  readonly contenedor: HTMLElement;
+  readonly etiqueta: HTMLElement;
+  readonly guia: SVGElement;
+  readonly marca: SVGElement;
+  readonly curva: readonly PuntoBalance[];
+  readonly balanceInicial: number;
+  readonly x: (indice: number) => number;
+  readonly y: (balance: number) => number;
+}
+
+/** Al pasar el puntero (o el dedo) por la curva, enseña la fecha, el balance y el resultado acumulado de la operación más cercana. */
+function activarEtiqueta(e: ElementosCurva): void {
+  const ocultar = (): void => {
+    e.etiqueta.hidden = true;
+    e.guia.setAttribute('visibility', 'hidden');
+    e.marca.setAttribute('visibility', 'hidden');
+  };
+  const mostrar = (evento: PointerEvent): void => {
+    const caja = e.dibujo.getBoundingClientRect();
+    if (caja.width === 0) return;
+    const xSvg = ((evento.clientX - caja.left) / caja.width) * ANCHO;
+    const ultima = e.curva.length - 1;
+    const indice = Math.min(ultima, Math.max(0, Math.round(((xSvg - MARGEN) / (ANCHO - 2 * MARGEN)) * ultima)));
+    const punto = e.curva[indice]!;
+    const px = e.x(indice);
+    const py = e.y(punto.balance);
+    e.guia.setAttribute('x1', String(px));
+    e.guia.setAttribute('x2', String(px));
+    e.marca.setAttribute('cx', String(px));
+    e.marca.setAttribute('cy', String(py));
+    e.guia.setAttribute('visibility', 'visible');
+    e.marca.setAttribute('visibility', 'visible');
+
+    // Resultado acumulado respecto al balance inicial del periodo, en importe y en % de la cuenta.
+    const acumulado = punto.balance - e.balanceInicial;
+    const enPorcentaje = e.balanceInicial > 0 ? ` (${porcentaje((acumulado / e.balanceInicial) * 100)})` : '';
+    e.etiqueta.replaceChildren(
+      crearElemento('div', {}, [`${fechaHoraUtc(punto.utcMs)} UTC`]),
+      crearElemento('div', {}, [`Balance: ${importe(punto.balance)}`]),
+      crearElemento('div', { class: claseSigno(acumulado) }, [`Acumulado: ${importe(acumulado)}${enPorcentaje}`]),
+      crearElemento('div', { class: 'texto-suave' }, [`Operación ${indice + 1} de ${e.curva.length}`]),
+    );
+    e.etiqueta.hidden = false;
+    // La etiqueta sigue al puntero, pero sin salirse del gráfico por ningún lado.
+    const cajaContenedor = e.contenedor.getBoundingClientRect();
+    const izquierda = ((px / ANCHO) * caja.width) + (caja.left - cajaContenedor.left);
+    const mitad = e.etiqueta.offsetWidth / 2;
+    const limite = Math.max(mitad, Math.min(cajaContenedor.width - mitad, izquierda));
+    e.etiqueta.style.left = `${limite}px`;
+  };
+  e.dibujo.addEventListener('pointermove', mostrar);
+  e.dibujo.addEventListener('pointerdown', mostrar);
+  e.dibujo.addEventListener('pointerleave', ocultar);
+}
+
 function crearCurva(curva: readonly PuntoBalance[], balanceInicial: number): HTMLElement {
   if (curva.length < 2) {
     return crearElemento('p', { class: 'texto-suave' }, ['Hacen falta al menos dos operaciones para dibujar la curva.']);
@@ -33,16 +90,23 @@ function crearCurva(curva: readonly PuntoBalance[], balanceInicial: number): HTM
   const puntos = curva.map((punto, indice) => `${x(indice).toFixed(1)},${y(punto.balance).toFixed(1)}`).join(' ');
   const yInicial = y(balanceInicial).toFixed(1);
 
+  const guia = crearSvg('line', { x1: '0', x2: '0', y1: '0', y2: String(ALTO), class: 'curva__guia', visibility: 'hidden' });
+  const marca = crearSvg('circle', { r: '4', cx: '0', cy: '0', class: 'curva__marca', visibility: 'hidden' });
   const dibujo = crearSvg('svg', { viewBox: `0 0 ${ANCHO} ${ALTO}`, class: 'curva', role: 'img', 'aria-label': 'Curva de balance' }, [
     crearSvg('line', { x1: String(MARGEN), x2: String(ANCHO - MARGEN), y1: yInicial, y2: yInicial, class: 'curva__base' }),
     crearSvg('polyline', { points: puntos, class: 'curva__linea' }),
+    guia,
+    marca,
   ]);
+  const etiqueta = crearElemento('div', { class: 'curva__etiqueta', hidden: '' });
+  const contenedor = crearElemento('div', { class: 'curva__contenedor' }, [dibujo as unknown as HTMLElement, etiqueta]);
+  activarEtiqueta({ dibujo, contenedor, etiqueta, guia, marca, curva, balanceInicial, x, y });
   const primero = curva[0];
   const ultimo = curva[curva.length - 1];
   return crearElemento('div', {}, [
-    dibujo as unknown as HTMLElement,
+    contenedor,
     crearElemento('p', { class: 'texto-suave' }, [
-      `De ${primero ? fechaHoraUtc(primero.utcMs) : ''} a ${ultimo ? fechaHoraUtc(ultimo.utcMs) : ''} (UTC) · mínimo ${importe(minimo)} · máximo ${importe(maximo)}. La línea fina marca el balance inicial.`,
+      `Pasa el ratón por encima para ver la fecha y el balance de cada operación. De ${primero ? fechaHoraUtc(primero.utcMs) : ''} a ${ultimo ? fechaHoraUtc(ultimo.utcMs) : ''} (UTC) · mínimo ${importe(minimo)} · máximo ${importe(maximo)}. La línea fina marca el balance inicial.`,
     ]),
   ]);
 }

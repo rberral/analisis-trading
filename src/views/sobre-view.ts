@@ -23,7 +23,7 @@ const PASOS: readonly Paso[] = [
   {
     titulo: 'Panel',
     ruta: '/',
-    texto: 'Resumen de balance, estadísticas, curva de balance y perfil de tu operativa (duración, sesiones, uso de SL y TP). Se filtra por periodo, activo y tipo de cierre.',
+    texto: 'Resumen de balance, estadísticas, curva de balance (con la fecha, el balance y el % de la cuenta al pasar el ratón) y perfil de tu operativa (duración, sesiones, uso de SL y TP). Se filtra por periodo, activo y tipo de cierre.',
   },
   {
     titulo: 'Operaciones y detalle',
